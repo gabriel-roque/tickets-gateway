@@ -1,11 +1,11 @@
 version: "3.8"
 
-services:      
+services:  
   sqldata:
     image: mcr.microsoft.com/mssql/server:2019-latest
     restart: unless-stopped
-    networks: 
-      - ticket-network
+    networks:
+      - tickets-api-network
     environment:
       - SA_PASSWORD=Pass@word
       - ACCEPT_EULA=Y
@@ -17,7 +17,7 @@ services:
 volumes:
   sqlserver-data:
     driver: local
-    
+
 networks:
-  ticket-network:
+  tickets-api-network:
     driver: bridge

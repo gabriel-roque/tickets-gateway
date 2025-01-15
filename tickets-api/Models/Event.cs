@@ -1,7 +1,9 @@
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TicketsApi.Models;
 
+[Table("Events")]
 public class Event : Entity
 {
     public string Name { get; set; }
