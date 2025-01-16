@@ -6,10 +6,18 @@ namespace TicketsApi.Dtos;
 public class EventCreateDto
 {
     [JsonPropertyName("name")]
-    [MaxLength(10, ErrorMessage = "Max. 10 characters")]
+    [MaxLength(20, ErrorMessage = "Max. 20 characters")]
     [MinLength(2, ErrorMessage = "Min. 2 characters")]
-    [Required]
-    public string Name { get; set; }
+    [Required(ErrorMessage = "name is required")]
+    public string Name { get; set; }   
+    
+    [JsonPropertyName("date")]
+    [Required(ErrorMessage = "date is required")]
+    public DateTime Date { get; set; }    
+    
+    [JsonPropertyName("total_tickets")]
+    [Required(ErrorMessage = "total_tickets is required")]
+    public int TotalTickets { get; set; }
 }
 public class EventUpdateDto : EventCreateDto
 {

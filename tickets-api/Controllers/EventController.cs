@@ -26,10 +26,10 @@ public class EventController (
     [Consumes(MediaTypeNames.Application.Json)]
     [ProducesResponseType(StatusCodes.Status200OK)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<IEnumerable<Event>>> GetEvents()
+    public async Task<ActionResult<IEnumerable<Event>>> GetEvents(int skip, int take)
     {
-        IEnumerable<Event> events = await eventService.List(0, 20);
-        return Ok(events);
+        IEnumerable<Event> events = await eventService.List(skip, take);
+        return Ok(Event.ToListView(events));
     }
     
     [HttpGet("{id}")]
@@ -47,7 +47,7 @@ public class EventController (
     
             if (@event is null) return NotFound();
     
-            return Ok(@event);
+            return Ok(@event.ToGetView());
         }
         catch (Exception e)
         {
@@ -61,14 +61,14 @@ public class EventController (
     [ProducesResponseType(StatusCodes.Status201Created)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
     [ProducesResponseType(StatusCodes.Status422UnprocessableEntity)]
-    public async Task<ActionResult<Event>> CreateEvent([FromBody] EventCreateDto body)
+    public async Task<ActionResult<EventViewModel>> CreateEvent([FromBody] EventCreateDto body)
     {
         Event @event = mapper.Map<Event>(body);
     
         try
         {
             await eventService.Create(@event);
-            return new ObjectResult(@event) { StatusCode = StatusCodes.Status201Created };
+            return new ObjectResult(@event.ToGetView()) { StatusCode = StatusCodes.Status201Created };
         }
         catch (Exception e)
         {
