@@ -8,6 +8,7 @@ namespace TicketsApi.AppConfig;
 public class AppDbContext(DbContextOptions options) : IdentityDbContext<User>(options)
 {
     public DbSet<Event> Event { get; set; }
+    public DbSet<Ticket> Ticket { get; set; }
     
     protected override void OnModelCreating(ModelBuilder builder)
     {
