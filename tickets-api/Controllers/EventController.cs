@@ -9,6 +9,7 @@ using TicketsApi.Dtos;
 using TicketsApi.Enums;
 using TicketsApi.Interfaces.Services;
 using TicketsApi.Models;
+using TicketsApi.ViewModels;
 
 namespace TicketsApi.Controllers;
 
@@ -47,7 +48,7 @@ public class EventController (
     
             if (@event is null) return NotFound();
     
-            return Ok(@event.ToGetView());
+            return Ok(Event.ToGetView(@event));
         }
         catch (Exception e)
         {
@@ -71,7 +72,7 @@ public class EventController (
             @event.OwnerId = userId;
             
             await eventService.Create(@event);
-            return new ObjectResult(@event.ToGetView()) { StatusCode = StatusCodes.Status201Created };
+            return new ObjectResult(Event.ToGetView(@event)) { StatusCode = StatusCodes.Status201Created };
         }
         catch (Exception e)
         {

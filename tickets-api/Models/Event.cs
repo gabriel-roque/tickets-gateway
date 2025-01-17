@@ -1,18 +1,10 @@
 using System.ComponentModel.DataAnnotations.Schema;
+using TicketsApi.ViewModels;
 
 namespace TicketsApi.Models;
 
-public class EventViewModel
-{
-    public Guid Id { get; set; }
-    public string Name { get; set; }
-    public DateTime Date { get; set; }
-    public int TotalTickets { get; set; }
-    public int PriceTicket { get; set; }
-}
-
 [Table("Events")]
-public class Event : Entity
+public class Event : Entity, IView<EventViewModel, Event>
 {
     public string Name { get; set; }
     public DateTime Date { get; set; }
@@ -22,21 +14,19 @@ public class Event : Entity
     public User Owner { get; set; }
     public Guid OwnerId { get; set; }
 
-    public EventViewModel ToGetView()
+    public static EventViewModel ToGetView(Event model)
     {
         return new EventViewModel()
         {
-            Id = Id,
-            Name = Name,
-            Date = Date,
-            TotalTickets = TotalTickets,
-            PriceTicket = PriceTicket
+            Id = model.Id,
+            Name = model.Name,
+            Date = model.Date,
+            TotalTickets = model.TotalTickets,
+            PriceTicket = model.PriceTicket
         };
     }
-    
-    public static List<EventViewModel> ToListView(IEnumerable<Event> events)
-    {
-        return events.Select(@event => @event.ToGetView()).ToList();
-    }
+
+    public static List<EventViewModel> ToListView(IEnumerable<Event> items)
+        => items.Select(ToGetView).ToList();
 }
 
