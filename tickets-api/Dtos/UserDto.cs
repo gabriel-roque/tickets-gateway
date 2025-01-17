@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json.Serialization;
 
 namespace TicketsApi.Dtos;
 
@@ -21,5 +22,6 @@ public class UserDto
     [Required]
     [DataType(DataType.Password)]
     [Compare(nameof(Password))]
+    [JsonPropertyName("confirm_password")]
     public string ConfirmPassword { get; set; } = string.Empty;
 }

@@ -18,6 +18,9 @@ public class Event : Entity
     public DateTime Date { get; set; }
     public int TotalTickets { get; set; } = 0;
     
+    public User Owner { get; set; }
+    public string OwnerId { get; set; }
+    
     [ConcurrencyCheck]
     public long Version { get; set; } = 0;
 
