@@ -19,7 +19,7 @@ public class Event : Entity
     public int TotalTickets { get; set; } = 0;
     
     public User Owner { get; set; }
-    public string OwnerId { get; set; }
+    public Guid OwnerId { get; set; }
     
     [ConcurrencyCheck]
     public long Version { get; set; } = 0;

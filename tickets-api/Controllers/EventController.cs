@@ -68,7 +68,7 @@ public class EventController (
         try
         {
             var userId = User.GetUserId();
-            @event.OwnerId = userId.ToString();
+            @event.OwnerId = userId;
             
             await eventService.Create(@event);
             return new ObjectResult(@event.ToGetView()) { StatusCode = StatusCodes.Status201Created };

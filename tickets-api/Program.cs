@@ -26,10 +26,10 @@ builder.Services.AddControllers().ConfigureApiBehaviorOptions(options =>
     });
 
 // Identity & JWT Auth
-builder.Services.AddIdentity<User, IdentityRole>()
+builder.Services.AddIdentity<User, IdentityRole<Guid>>()
     .AddEntityFrameworkStores<AppDbContext>()
     .AddSignInManager()
-    .AddRoles<IdentityRole>();
+    .AddRoles<IdentityRole<Guid>>();
 
 // JWT
 builder.Services.AddAuthentication(options =>

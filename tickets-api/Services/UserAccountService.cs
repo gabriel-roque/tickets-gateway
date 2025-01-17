@@ -10,7 +10,7 @@ namespace TicketsApi.Services;
 
 public class UserAccountService(
     UserManager<User> userManager,
-    RoleManager<IdentityRole> roleManager,
+    RoleManager<IdentityRole<Guid>> roleManager,
     ITokenService tokenService
 ) : IUserAccountService
 {
@@ -33,17 +33,17 @@ public class UserAccountService(
         if (!createUser.Succeeded) throw new BadRequestException("Error occured.. please try again");
 
         // Assign Default Role : Admin to first registrar; rest is user (Only logic for study and test)
-        IdentityRole checkAdmin = await roleManager.FindByNameAsync(Roles.ADMIN);
+        var checkAdmin = await roleManager.FindByNameAsync(Roles.ADMIN);
         if (checkAdmin is null)
         {
-            await roleManager.CreateAsync(new IdentityRole() { Name = Roles.ADMIN });
+            await roleManager.CreateAsync(new IdentityRole<Guid>() { Name = Roles.ADMIN });
             await userManager.AddToRoleAsync(newUser, Roles.ADMIN);
             return new ServiceResponse.CreateAccount("Account Created");
         }
         
-        IdentityRole checkUser = await roleManager.FindByNameAsync(Roles.USER);
+        var checkUser = await roleManager.FindByNameAsync(Roles.USER);
         if (checkUser is null)
-            await roleManager.CreateAsync(new IdentityRole() { Name = Roles.USER });
+            await roleManager.CreateAsync(new IdentityRole<Guid>() { Name = Roles.USER });
 
         await userManager.AddToRoleAsync(newUser, Roles.USER);
         return new ServiceResponse.CreateAccount("Account Created");
@@ -62,7 +62,7 @@ public class UserAccountService(
             throw new UnauthorizationException("Invalid email/password");
 
         var getUserRole = await userManager.GetRolesAsync(getUser);
-        var userSession = new UserSession(getUser.Id, getUser.Name, getUser.Email, getUserRole.First());
+        var userSession = new UserSession(getUser.Id.ToString(), getUser.Name, getUser.Email, getUserRole.First());
 
         string token = tokenService.Generate(userSession);
         
