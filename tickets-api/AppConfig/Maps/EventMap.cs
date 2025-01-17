@@ -13,8 +13,6 @@ internal static class EventMap
             builder.Property(p => p.Name).DefaultString(20, true);
             builder.Property(p => p.Date);
             builder.Property(p => p.TotalTickets);
-            builder.Property(p => p.Version)
-                .IsConcurrencyToken();
         });
     }
 }

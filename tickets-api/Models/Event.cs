@@ -1,4 +1,3 @@
-using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace TicketsApi.Models;
@@ -9,6 +8,7 @@ public class EventViewModel
     public string Name { get; set; }
     public DateTime Date { get; set; }
     public int TotalTickets { get; set; }
+    public int PriceTicket { get; set; }
 }
 
 [Table("Events")]
@@ -17,12 +17,10 @@ public class Event : Entity
     public string Name { get; set; }
     public DateTime Date { get; set; }
     public int TotalTickets { get; set; } = 0;
+    public int PriceTicket { get; set; } = 0;
     
     public User Owner { get; set; }
     public Guid OwnerId { get; set; }
-    
-    [ConcurrencyCheck]
-    public long Version { get; set; } = 0;
 
     public EventViewModel ToGetView()
     {
@@ -31,7 +29,8 @@ public class Event : Entity
             Id = Id,
             Name = Name,
             Date = Date,
-            TotalTickets = TotalTickets
+            TotalTickets = TotalTickets,
+            PriceTicket = PriceTicket
         };
     }
     

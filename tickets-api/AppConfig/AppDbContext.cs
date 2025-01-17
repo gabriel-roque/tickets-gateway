@@ -31,13 +31,13 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Ro
 
     private void OnBeforeSaving()
     {
-        foreach (var entry in ChangeTracker.Entries<Event>())
-            switch (entry.State)
-            {
-                case EntityState.Modified:
-                    entry.Entity.Version =  entry.Entity.Version == 0 ? 1 : entry.Entity.Version + 1;
-                    break;
-            }
+        // foreach (var entry in ChangeTracker.Entries<Event>())
+        //     switch (entry.State)
+        //     {
+        //         case EntityState.Modified:
+        //             entry.Entity.Version =  entry.Entity.Version == 0 ? 1 : entry.Entity.Version + 1;
+        //             break;
+        //     }
         
         foreach (var entry in ChangeTracker.Entries<Entity>())
             switch (entry.State)

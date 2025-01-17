@@ -17,7 +17,11 @@ public class EventCreateDto
     
     [JsonPropertyName("total_tickets")]
     [Required(ErrorMessage = "total_tickets is required")]
-    public int TotalTickets { get; set; }
+    public int TotalTickets { get; set; }    
+    
+    [JsonPropertyName("price_ticket")]
+    [Required(ErrorMessage = "price_ticket is required")]
+    public int PriceTicket { get; set; }
 }
 public class EventUpdateDto : EventCreateDto
 {

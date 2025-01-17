@@ -31,23 +31,10 @@ public class EventRepository(
 
     public async Task<Event> Update(Event @event)
     {
-        var eventFound =
-            await database.Event
-                .FirstOrDefaultAsync((r) =>
-                    r.Id == @event.Id);
-
-        if (eventFound is null)
-            throw new NotFoundException("Event not found with version");
-
-        eventFound.Name = @event.Name;
-        eventFound.Date = @event.Date;
-        eventFound.TotalTickets = @event.TotalTickets;
-
-        database.Update(eventFound);
-        
+        database.Update(@event);
         await database.SaveChangesAsync();
 
-        return eventFound;
+        return await Get(@event.Id);;
     }
 
     public async Task<IEnumerable<Event>> List(int skip, int take = 10)

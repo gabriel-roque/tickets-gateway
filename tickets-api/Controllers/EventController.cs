@@ -92,6 +92,7 @@ public class EventController (
     
         try
         {
+            @event.OwnerId = User.GetUserId();
             await eventService.Update(@event);
             return new ObjectResult(null) { StatusCode = StatusCodes.Status204NoContent };
         }
