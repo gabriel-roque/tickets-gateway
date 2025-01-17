@@ -12,4 +12,6 @@ public class TicketService (
     public async Task<Ticket> Get(Guid ticketId) => await ticketRepository.Get(ticketId);
     public async Task<Ticket> Create(Ticket ticket) => await ticketRepository.Create(ticket);
     public async Task<Ticket> Update(Ticket ticket) => await ticketRepository.Update(ticket);
+    public Task<IEnumerable<Ticket>> ListByOwner(Guid ownerId, int skip, int take = 10)
+        => ticketRepository.ListByOwner(ownerId, skip, take);
 }

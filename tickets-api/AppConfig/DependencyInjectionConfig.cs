@@ -27,6 +27,7 @@ public static class DependencyInjectionConfig
         services.AddTransient<ITokenService, TokenService>();
         services.AddTransient<IUserAccountService, UserAccountService>();
         services.AddTransient<IEventService, EventService>();
+        services.AddTransient<ITicketService, TicketService>();
 
         return services;
     }
@@ -34,6 +35,7 @@ public static class DependencyInjectionConfig
     public static IServiceCollection AddRepositoriesDI(this IServiceCollection services)
     {
         services.AddTransient<IEventRepository, EventRepository>();
+        services.AddTransient<ITicketRepository, TicketRepository>();
 
         return services;
     }
