@@ -1,12 +1,10 @@
-
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using TicketsApi.Models;
 
 namespace TicketsApi.AppConfig;
 
-public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, IdentityRole<Guid>, Guid>(options)
+public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Role, Guid>(options)
 {
     public DbSet<Event> Event { get; set; }
     public DbSet<Ticket> Ticket { get; set; }

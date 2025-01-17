@@ -37,12 +37,7 @@ public class Event : Entity
     
     public static List<EventViewModel> ToListView(IEnumerable<Event> events)
     {
-      var items = new List<EventViewModel>();
-
-      foreach (var @event in events)
-          items.Add(@event.ToGetView());
-      
-      return items;
+        return events.Select(@event => @event.ToGetView()).ToList();
     }
 }
 

@@ -10,7 +10,7 @@ namespace TicketsApi.Services;
 
 public class UserAccountService(
     UserManager<User> userManager,
-    RoleManager<IdentityRole<Guid>> roleManager,
+    RoleManager<Role> roleManager,
     ITokenService tokenService
 ) : IUserAccountService
 {
@@ -36,14 +36,14 @@ public class UserAccountService(
         var checkAdmin = await roleManager.FindByNameAsync(Roles.ADMIN);
         if (checkAdmin is null)
         {
-            await roleManager.CreateAsync(new IdentityRole<Guid>() { Name = Roles.ADMIN });
+            await roleManager.CreateAsync(new Role() { Name = Roles.ADMIN });
             await userManager.AddToRoleAsync(newUser, Roles.ADMIN);
             return new ServiceResponse.CreateAccount("Account Created");
         }
         
         var checkUser = await roleManager.FindByNameAsync(Roles.USER);
         if (checkUser is null)
-            await roleManager.CreateAsync(new IdentityRole<Guid>() { Name = Roles.USER });
+            await roleManager.CreateAsync(new Role() { Name = Roles.USER });
 
         await userManager.AddToRoleAsync(newUser, Roles.USER);
         return new ServiceResponse.CreateAccount("Account Created");
