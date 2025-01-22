@@ -1,0 +1,11 @@
+{
+	"folders": [
+		{
+			"path": "gateway-api"
+		},
+		{
+			"path": "infra"
+		}
+	],
+	"settings": {}
+}
