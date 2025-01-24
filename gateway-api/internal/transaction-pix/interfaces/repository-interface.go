@@ -1,7 +1,9 @@
-package transaction_pix_repository_interfaces
+package transaction_pix_interfaces
 
-import transaction_pix "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix"
+import (
+	interfaces "github.com/gabriel-roque/tickets-gateway/pkg/interfaces"
+)
 
 type ITransactionPixRepository interface {
-	Save(transaction *transaction_pix.TransactionPix)
+	Save(transaction *interfaces.CreateTransactionPix)
 }
