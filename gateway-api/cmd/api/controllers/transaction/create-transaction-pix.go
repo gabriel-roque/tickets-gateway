@@ -20,7 +20,8 @@ func CreateTransactionPix(ctx *gin.Context) {
 		return
 	}
 
-	transaction_pix_handlers.NewCreateTransactionPixHandler().Execute(body)
+	handler := transaction_pix_handlers.NewTransactionPixHandler()
+	handler.Create(body)
 
 	ctx.JSON(http.StatusCreated, gin.H{"success": true})
 }
