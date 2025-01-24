@@ -1,11 +1,13 @@
 {
 	"folders": [
 		{
+			"name": "infra",
 			"path": "infra"
 		},
 		{
-			"path": "gateway-api",
-		},
+			"name": "gateway-api",
+			"path": "gateway-api"
+		}
 	],
 	"settings": {}
 }

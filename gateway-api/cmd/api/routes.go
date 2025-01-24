@@ -1,16 +1,13 @@
 package main
 
 import (
-	"github.com/gabriel-roque/tickets-gateway/cmd/api/controllers"
-	"github.com/gabriel-roque/tickets-gateway/internal/repositories"
+	controllers "github.com/gabriel-roque/tickets-gateway/cmd/api/controllers/transaction"
 	"github.com/gin-gonic/gin"
 )
 
-func CategoryRoutes(router *gin.Engine) {
-	categoryRoutes := router.Group("/categories")
+// TODO: Middleware X-API-KEY
+func TransactionPixRoutes(router *gin.Engine) {
+	transactionPixRoutes := router.Group("/transaction-pix")
 
-	inMemoryCategoryRepository := repositories.NewInMemoryCategoryRepository()
-	categoryRoutes.POST("/", func(ctx *gin.Context) {
-		controllers.CreateCategory(ctx, inMemoryCategoryRepository)
-	})
+	transactionPixRoutes.POST("/", controllers.CreateTransactionPix)
 }
