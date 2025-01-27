@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 )
 
@@ -19,11 +18,6 @@ type DatabaseConfig struct {
 }
 
 func loadConfig() (DatabaseConfig, string) {
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatalf("Erro ao carregar arquivo .env: %v", err)
-	}
-
 	config := DatabaseConfig{
 		Host:     os.Getenv("DB_HOST"),
 		Port:     os.Getenv("DB_PORT"),
