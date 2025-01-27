@@ -4,11 +4,11 @@ import (
 	"fmt"
 
 	transaction_interfaces "github.com/gabriel-roque/tickets-gateway/pkg/interfaces"
+	"github.com/gabriel-roque/tickets-gateway/pkg/qrcode"
 )
 
 func (r *Repository) Save(transaction *transaction_interfaces.CreateTransactionPix) {
-	// TODO: create function generate qr_code
-	qr_code := "fake_qr_code"
+	qr_code := qrcode.GenerateQRCodePix(transaction.Value, transaction.Name)
 
 	var transactionId string
 
