@@ -10,4 +10,5 @@ func TransactionPixRoutes(router *gin.Engine) {
 	transactionPixRoutes := router.Group("/transaction-pix")
 
 	transactionPixRoutes.POST("/", controllers.CreateTransactionPix)
+	transactionPixRoutes.GET("/:id", controllers.GetTransactionPix)
 }
