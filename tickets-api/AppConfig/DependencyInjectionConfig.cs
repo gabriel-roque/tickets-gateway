@@ -28,6 +28,7 @@ public static class DependencyInjectionConfig
         services.AddTransient<IUserAccountService, UserAccountService>();
         services.AddTransient<IEventService, EventService>();
         services.AddTransient<ITicketService, TicketService>();
+        services.AddTransient<IKafkaService, KafkaService>();
 
         return services;
     }
