@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TicketsApi.Consumers;
 using TicketsApi.Interfaces.Repositories;
 using TicketsApi.Interfaces.Services;
 using TicketsApi.Repositories;
@@ -38,6 +39,13 @@ public static class DependencyInjectionConfig
         services.AddTransient<IEventRepository, EventRepository>();
         services.AddTransient<ITicketRepository, TicketRepository>();
 
+        return services;
+    }
+
+    public static IServiceCollection RegisterConsumers(this IServiceCollection services)
+    {
+        services.AddHostedService<PaymentTicketConsumer>();
+        
         return services;
     }
 }

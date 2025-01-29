@@ -67,6 +67,7 @@ builder.Services.AddSwaggerGen(options =>
 builder.Services.AddDatabasesConfigDI(builder.Configuration);
 builder.Services.AddRepositoriesDI();
 builder.Services.AddApplicationServicesDI();
+builder.Services.RegisterConsumers();
 
 // Mapper
 var mapperConfig = new MapperConfiguration(mc =>
