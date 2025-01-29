@@ -4,7 +4,8 @@ using TicketsApi.Interfaces.Services;
 namespace TicketsApi.Services;
 
 public class KafkaService(
-    IConfiguration config
+    IConfiguration config,
+    ILogger<KafkaService> logger
     ) : IKafkaService
 {
     public Task SendMessageAsync<T>(string topic, string message)
@@ -17,11 +18,11 @@ public class KafkaService(
             try
             {
                 var deliveryResult = producer.ProduceAsync(topic, new Message<Null, string>() {Value = message}).Result;
-                Console.WriteLine($"Message send: [{deliveryResult.Topic}: {deliveryResult.Value}]");
+                logger.LogInformation($"Message send: [{deliveryResult.Topic}: {deliveryResult.Value}]");
             }
             catch (ProduceException<Null, string> e)
             {
-                Console.WriteLine($"Error in send message: [{e.Error.Reason}]");
+                logger.LogInformation($"Error in send message: [{e.Error.Reason}]");
             }
         }
         

@@ -1,4 +1,5 @@
 using Confluent.Kafka;
+using TicketsApi.Enums;
 
 namespace TicketsApi.Consumers;
 public class PaymentTicketConsumer : BackgroundService
@@ -6,23 +7,30 @@ public class PaymentTicketConsumer : BackgroundService
     private readonly ILogger<PaymentTicketConsumer> _logger;
     private readonly IConsumer<Ignore, string> _consumer;
     
-    public PaymentTicketConsumer(ILogger<PaymentTicketConsumer> logger)
+    public PaymentTicketConsumer(
+        ILogger<PaymentTicketConsumer> logger, 
+        IConfiguration config
+    )
     {
         _logger = logger;
-        var config = new ConsumerConfig
+
+        var kafkaUrl = config.GetValue<string>("Kafka:Url");
+        
+        var kafkaConfig = new ConsumerConfig
         {
-            BootstrapServers = "localhost:9092",
-            GroupId = "payment-ticket-group",
+            BootstrapServers = kafkaUrl,
+            GroupId = $"{KafkaTopicsEnum.PaymentTicket}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = false
+            EnableAutoCommit = true
         };
-        _consumer = new ConsumerBuilder<Ignore, string>(config).Build();
+        _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
         _consumer.Subscribe("payment-ticket");
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation("PaymentTicketConsumer iniciado.");
+        var consumerName = "[PaymentTicketConsumer]";
+        _logger.LogInformation($"Starting Consumer {consumerName}");
         
         await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
         
@@ -33,30 +41,17 @@ public class PaymentTicketConsumer : BackgroundService
                 var consumeResult = _consumer.Consume(stoppingToken);
                 if (consumeResult != null)
                 {
-                    _logger.LogInformation($"Mensagem recebida: {consumeResult.Value}");
-                    // Aqui você pode processar a mensagem
+                    _logger.LogInformation($"{consumerName} - [CONSUMER]: {consumeResult.Value}");
                     _consumer.Commit(consumeResult);
                 }
             }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning("Cancelamento solicitado. Encerrando consumidor.");
-                break;
-            }
             catch (Exception ex)
             {
-                _logger.LogError($"Erro ao consumir mensagem: {ex.Message}");
+                _logger.LogError($"{consumerName} - [ERROR_MESSAGE]: {ex.Message}");
             }
 
-            await Task.Delay(TimeSpan.FromMilliseconds(300), stoppingToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(1), stoppingToken);
         }
-    }
-
-    public override void Dispose()
-    {
-        _consumer.Close();
-        _consumer.Dispose();
-        base.Dispose();
     }
 }
 
