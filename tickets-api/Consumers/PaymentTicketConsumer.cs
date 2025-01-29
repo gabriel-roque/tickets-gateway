@@ -24,7 +24,7 @@ public class PaymentTicketConsumer : BackgroundService
             EnableAutoCommit = true
         };
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
-        _consumer.Subscribe("payment-ticket");
+        _consumer.Subscribe(KafkaTopicsEnum.PaymentTicket);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
