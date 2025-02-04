@@ -1,11 +1,11 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
 	"log"
 	"os"
 
+	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
 
@@ -37,7 +37,7 @@ func loadConfig() (DatabaseConfig, string) {
 func DatabasePing() bool {
 	_, connectionString := loadConfig()
 
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
 	}
@@ -52,10 +52,10 @@ func DatabasePing() bool {
 	return true
 }
 
-func CreateConnection() *sql.DB {
+func CreateConnection() *sqlx.DB {
 	_, connectionString := loadConfig()
 
-	db, err := sql.Open("postgres", connectionString)
+	db, err := sqlx.Open("postgres", connectionString)
 	if err != nil {
 		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
 	}

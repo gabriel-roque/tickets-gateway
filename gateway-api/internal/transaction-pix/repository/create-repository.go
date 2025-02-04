@@ -18,14 +18,19 @@ func (r *Repository) Save(transaction *transaction_interfaces.CreateTransactionP
 		VALUES ($1, $2, $3, $4)
 		RETURNING id
 	`
-	err := r.db.QueryRow(queryInsert, transaction.Name, transaction.ExternalId, transaction.Value, qr_code).Scan(&transactionId)
+	errCreate := r.db.QueryRow(queryInsert, transaction.Name, transaction.ExternalId, transaction.Value, qr_code).Scan(&transactionId)
 
-	transactionCreated := r.GetById(transactionId)
-	fmt.Println(transactionCreated)
-
-	if err != nil {
+	if errCreate != nil {
 		fmt.Println("Failed in create transaction")
 	}
+
+	transactionCreated, errGet := r.GetById(transactionId)
+
+	if errGet != nil {
+		fmt.Println("Failed in create transaction")
+	}
+
+	fmt.Println(transactionCreated)
 
 	return transactionCreated
 }

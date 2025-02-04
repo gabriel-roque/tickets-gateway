@@ -1,13 +1,12 @@
 package transaction_pix_repository
 
 import (
-	"database/sql"
-
 	"github.com/gabriel-roque/tickets-gateway/pkg/database"
+	"github.com/jmoiron/sqlx"
 )
 
 type Repository struct {
-	db *sql.DB
+	db *sqlx.DB
 }
 
 func NewTransactionPixRepository() *Repository {

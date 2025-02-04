@@ -7,5 +7,5 @@ import (
 
 type ITransactionPixRepository interface {
 	Save(transaction *interfaces.CreateTransactionPix) transaction_pix.TransactionPix
-	GetById(id string) transaction_pix.TransactionPix
+	GetById(id string) (transaction_pix.TransactionPix, error)
 }

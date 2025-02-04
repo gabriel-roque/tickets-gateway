@@ -7,7 +7,11 @@ import (
 )
 
 func (u *TransactionPixHandler) GetById(id string) (transaction_pix.TransactionPix, error) {
-	transaction := u.repository.GetById(id)
+	transaction, err := u.repository.GetById(id)
+
+	if err != nil {
+		return transaction_pix.TransactionPix{}, err
+	}
 
 	if transaction.Id != id {
 		return transaction_pix.TransactionPix{}, errors.New("Not found")
