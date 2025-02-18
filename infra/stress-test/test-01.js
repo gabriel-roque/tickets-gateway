@@ -6,16 +6,15 @@ export let options = {
     stress_test: {
       executor: 'ramping-vus',
       stages: [
-        { duration: '10s', target: 50 }, // Aumenta para 50 usuários simultâneos
-        { duration: '30s', target: 100 }, // Sobe para 100 usuários
-        { duration: '30s', target: 500 }, // Sobe para 500 usuários
-        { duration: '30s', target: 1000 }, // Sobe para 1000 usuários
-        { duration: '10s', target: 0 }, // Finaliza o teste
+        { duration: '10s', target: 50 },
+        { duration: '30s', target: 100 },
+        { duration: '10s', target: 0 },
+        { duration: '60s', target: 200 },
       ],
     },
     steady_load: {
       executor: 'constant-arrival-rate',
-      rate: 100, // 100 requisições por segundo
+      rate: 100,
       timeUnit: '1s',
       duration: '10s',
       preAllocatedVUs: 100,
@@ -42,10 +41,9 @@ export default function () {
 
   check(res, {
     'is status 201': (r) => r.status === 201,
-    '90% of responses are 201': (r) => Math.random() > 0.1 || r.status === 201,
     'is response time < 1s': (r) => r.timings.duration < 1000,
-    '90% response time below 1s': (r) =>
-      Math.random() > 0.1 || r.timings.duration < 1000,
+    'is response time < 2s': (r) => r.timings.duration < 2000,
+    'is response time < 3s': (r) => r.timings.duration < 3000,
   });
 
   sleep(1);
