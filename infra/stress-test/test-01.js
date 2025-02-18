@@ -23,7 +23,7 @@ export let options = {
 };
 
 export default function () {
-  let url = 'http://localhost:5003/tickets';
+  let url = 'http://localhost:5000/tickets';
   let payload = JSON.stringify({
     event_id: 'da208363-d007-445a-0fb2-08dd50475791',
     payment_method: 1,

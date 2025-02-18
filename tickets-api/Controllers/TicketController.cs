@@ -3,8 +3,6 @@ using AutoMapper;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using TicketsApi.AppConfig.Errors;
 using TicketsApi.Dtos;
 using TicketsApi.Enums;
 using TicketsApi.Interfaces.Services;
