@@ -10,44 +10,46 @@ public class PaymentTicketConsumer : BackgroundService
     private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<PaymentTicketConsumer> _logger;
     private readonly IConsumer<Ignore, string> _consumer;
-    private readonly List<Ticket> _buffer = new();
+    private readonly List<ConsumeResult<Ignore, string>> _buffer = new();
     private readonly object _lock = new();
+    private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private const int BULK_SIZE = 100;
+    private const int BULK_SIZE = 200;
     private static readonly TimeSpan TIME_LIMIT = TimeSpan.FromSeconds(10);
 
-    public PaymentTicketConsumer(
-        IServiceProvider serviceProvider,
-        ILogger<PaymentTicketConsumer> logger, 
-        IConfiguration config
-    )
+    public PaymentTicketConsumer(IServiceProvider serviceProvider, ILogger<PaymentTicketConsumer> logger, IConfiguration config)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
 
         var kafkaUrl = config.GetValue<string>("Kafka:Url");
-        
+
         var kafkaConfig = new ConsumerConfig
         {
             BootstrapServers = kafkaUrl,
             GroupId = $"{KafkaTopicsEnum.PaymentTicket}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = true,
+            EnableAutoCommit = false,
             MaxInFlight = 10,
         };
+
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
         _consumer.Subscribe(KafkaTopicsEnum.PaymentTicket);
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var consumerName = "[PaymentTicketConsumer]";
-        _logger.LogInformation($"Starting Consumer {consumerName}");
+        _logger.LogInformation($"[PaymentTicketConsumer] Starting Consumer...");
 
-        _ = ProcessBufferPeriodically(stoppingToken); // Inicia a tarefa para processar buffer periodicamente
+        // Rodar em Threads Diferentes
+        Task.Run(() => ConsumeKafka(stoppingToken), stoppingToken);
+        Task.Run(() => ProcessBufferPeriodically(stoppingToken), stoppingToken);
 
-        await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken); // Pequeno delay para garantir inicialização correta
+        return Task.CompletedTask;
+    }
 
+    private void ConsumeKafka(CancellationToken stoppingToken)
+    {
         while (!stoppingToken.IsCancellationRequested)
         {
             try
@@ -55,59 +57,60 @@ public class PaymentTicketConsumer : BackgroundService
                 var consumeResult = _consumer.Consume(stoppingToken);
                 if (consumeResult != null)
                 {
-                    var ticket = JsonSerializer.Deserialize<Ticket>(consumeResult.Message.Value);
-                    _logger.LogInformation($"{consumerName} - [CONSUMER]: {ticket}");
-
-                    if (ticket is not null)
+                    lock (_lock)
                     {
-                        lock (_lock)
-                        {
-                            _buffer.Add(ticket);
-                        }
-
-                        if (_buffer.Count >= BULK_SIZE)
-                        {
-                            await ProcessBuffer();
-                        }
+                        _buffer.Add(consumeResult);
                     }
 
-                    _consumer.Commit(consumeResult);
+                    if (_buffer.Count >= BULK_SIZE)
+                    {
+                        Task.Run(() => ProcessBuffer());
+                    }
                 }
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("[KAFKA] Consumer is cancelled.");
             }
             catch (Exception ex)
             {
-                _logger.LogError($"{consumerName} - [ERROR_MESSAGE]: {ex.Message}");
+                _logger.LogError($"[KAFKA_ERROR] {ex.Message}");
             }
-
-            await Task.Delay(TimeSpan.FromMilliseconds(1), stoppingToken);
         }
     }
 
     private async Task ProcessBuffer()
     {
-        List<Ticket> ticketsToInsert;
-        lock (_lock)
+        if (!await _semaphore.WaitAsync(0)) return; // Evita múltiplos processamentos concorrentes
+        try
         {
-            if (_buffer.Count == 0) return;
+            List<ConsumeResult<Ignore, string>> messagesToProcess;
+            lock (_lock)
+            {
+                if (_buffer.Count == 0) return;
+                messagesToProcess = new List<ConsumeResult<Ignore, string>>(_buffer);
+                _buffer.Clear();
+            }
 
-            ticketsToInsert = new List<Ticket>(_buffer);
-            _buffer.Clear();
+            using var scope = _serviceProvider.CreateScope();
+            ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
+
+            if (ticketRepository is not null)
+            {
+                var tickets = messagesToProcess.Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value)).ToList();
+                await ticketRepository.BulkCreate(tickets);
+                _logger.LogInformation($"[BULK_INSERT] {tickets.Count} tickets inserted!");
+
+                _consumer.Commit(messagesToProcess.Select(m => m.TopicPartitionOffset));
+            }
         }
-
-        using var scope = _serviceProvider.CreateScope();
-        ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
-
-        if (ticketRepository is not null)
+        catch (Exception ex)
         {
-            try
-            {
-                await ticketRepository.BulkCreate(ticketsToInsert);
-                _logger.LogInformation($"[BULK INSERT] {ticketsToInsert.Count} tickets inseridos no banco!");
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError($"[BULK INSERT ERROR] {ex.Message}");
-            }
+            _logger.LogError($"[BULK_INSERT_ERROR] {ex.Message}");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
     }
 
