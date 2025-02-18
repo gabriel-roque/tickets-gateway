@@ -1,18 +1,24 @@
+using System.Text.Json;
 using Confluent.Kafka;
 using TicketsApi.Enums;
+using TicketsApi.Interfaces.Repositories;
+using TicketsApi.Models;
 
 namespace TicketsApi.Consumers;
 public class PaymentTicketConsumer : BackgroundService
 {
+    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<PaymentTicketConsumer> _logger;
     private readonly IConsumer<Ignore, string> _consumer;
     
     public PaymentTicketConsumer(
+        IServiceProvider serviceProvider,
         ILogger<PaymentTicketConsumer> logger, 
         IConfiguration config
     )
     {
         _logger = logger;
+        _serviceProvider = serviceProvider;
 
         var kafkaUrl = config.GetValue<string>("Kafka:Url");
         
@@ -21,7 +27,8 @@ public class PaymentTicketConsumer : BackgroundService
             BootstrapServers = kafkaUrl,
             GroupId = $"{KafkaTopicsEnum.PaymentTicket}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
-            EnableAutoCommit = true
+            EnableAutoCommit = true,
+            MaxInFlight = 10,
         };
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
         _consumer.Subscribe(KafkaTopicsEnum.PaymentTicket);
@@ -41,8 +48,17 @@ public class PaymentTicketConsumer : BackgroundService
                 var consumeResult = _consumer.Consume(stoppingToken);
                 if (consumeResult != null)
                 {
-                    _logger.LogInformation($"{consumerName} - [CONSUMER]: {consumeResult.Value}");
-                    _consumer.Commit(consumeResult);
+                    var ticket = JsonSerializer.Deserialize<Ticket>(consumeResult.Message.Value);
+                    _logger.LogInformation($"{consumerName} - [CONSUMER]: {ticket}");
+
+                    using var scope = _serviceProvider.CreateScope();
+                    ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
+
+                    if (ticket is not null && ticketRepository is not null)
+                    {
+                        await ticketRepository.Create(ticket);
+                        _consumer.Commit(consumeResult);
+                    }
                 }
             }
             catch (Exception ex)

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using TicketsApi.Enums;
 using TicketsApi.Interfaces.Repositories;
 using TicketsApi.Interfaces.Services;
@@ -15,9 +16,7 @@ public class TicketService (
 
     public async Task<Ticket> Create(Ticket ticket)
     {
-        await ticketRepository.Create(ticket);
-
-        await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, ticket.Id.ToString());
+        await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
         
         return ticket;
     }
