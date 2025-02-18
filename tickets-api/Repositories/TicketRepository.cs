@@ -28,6 +28,13 @@ public class TicketRepository(
         return ticket;
     }
 
+    public Task BulkCreate(List<Ticket> tickets)
+    {
+        database.Ticket.AddRange(tickets);
+        
+        return database.SaveChangesAsync();
+    }
+
     public async Task<Ticket> Update(Ticket ticket)
     {
         database.Update(ticket);
