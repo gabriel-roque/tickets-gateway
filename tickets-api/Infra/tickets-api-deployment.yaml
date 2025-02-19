@@ -5,7 +5,7 @@ metadata:
   labels:
     app: tickets-api
 spec:
-  replicas: 2
+  replicas: 4
   selector:
     matchLabels:
       app: tickets-api
@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
         - name: tickets-api
-          image: gabrielroque/tickets-api
+          image: gabrielroque/tickets-api:latest
           ports:
             - containerPort: 5000
           env:

@@ -10,7 +10,9 @@ public class KafkaService(
 {
     public Task SendMessageAsync<T>(string topic, string message)
     {
-        var url = config.GetValue<string>("Kafka:Url");
+        var url = config.GetValue<string>("Kafka:Url") ?? Environment.GetEnvironmentVariable("Kafka__Url");
+        logger.LogInformation("Kafka URL: {Url}", url);
+        
         var kafkaConfig = new ProducerConfig  { BootstrapServers = url };
 
         using (var producer = new ProducerBuilder<Null, string>(kafkaConfig).Build())

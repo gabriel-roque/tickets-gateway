@@ -22,7 +22,10 @@ public class PaymentTicketConsumer : BackgroundService
         _logger = logger;
         _serviceProvider = serviceProvider;
 
-        var kafkaUrl = config.GetValue<string>("Kafka:Url");
+        var kafkaUrl = config.GetValue<string>("Kafka:Url") ??
+                       Environment.GetEnvironmentVariable("Kafka__Url");
+        
+        _logger.LogInformation("Kafka URL: {Url}", kafkaUrl);
 
         var kafkaConfig = new ConsumerConfig
         {
