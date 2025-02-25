@@ -6,18 +6,9 @@ export let options = {
     stress_test: {
       executor: 'ramping-vus',
       stages: [
-        { duration: '10s', target: 50 },
-        { duration: '30s', target: 100 },
-        { duration: '10s', target: 0 },
-        { duration: '60s', target: 200 },
+        { duration: '30s', target: 500 },
+        { duration: '60s', target: 1000 },
       ],
-    },
-    steady_load: {
-      executor: 'constant-arrival-rate',
-      rate: 100,
-      timeUnit: '1s',
-      duration: '10s',
-      preAllocatedVUs: 100,
     },
   },
 };
