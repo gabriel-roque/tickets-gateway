@@ -1,4 +1,4 @@
-kind create cluster --config kind-cluster.yaml
+kind create cluster --name tickets-api-cluster --config tickets-api-cluster.yaml
 
 kubectl apply -f tickets-api-deployment.yaml
 
