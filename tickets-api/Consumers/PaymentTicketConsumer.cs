@@ -2,9 +2,11 @@ using System.Text.Json;
 using Confluent.Kafka;
 using TicketsApi.Enums;
 using TicketsApi.Interfaces.Repositories;
+using TicketsApi.Interfaces.Services;
 using TicketsApi.Models;
 
 namespace TicketsApi.Consumers;
+
 public class PaymentTicketConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
@@ -14,18 +16,19 @@ public class PaymentTicketConsumer : BackgroundService
     private readonly object _lock = new();
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private const int BULK_SIZE = 200;
-    private static readonly TimeSpan TIME_LIMIT = TimeSpan.FromSeconds(10);
+    private const int BULK_SIZE = 1;
+    private static readonly TimeSpan TIME_LIMIT = TimeSpan.FromSeconds(2);
 
-    public PaymentTicketConsumer(IServiceProvider serviceProvider, ILogger<PaymentTicketConsumer> logger, IConfiguration config)
+    public PaymentTicketConsumer(IServiceProvider serviceProvider, ILogger<PaymentTicketConsumer> logger,
+        IConfiguration config)
     {
         _logger = logger;
         _serviceProvider = serviceProvider;
 
         var kafkaUrl = config.GetValue<string>("Kafka:Url") ??
                        Environment.GetEnvironmentVariable("Kafka__Url");
-        
-        _logger.LogInformation("Kafka URL: {Url}", kafkaUrl);
+
+        _logger.LogInformation("PaymentTicketConsumer - Kafka URL: {Url}", kafkaUrl);
 
         var kafkaConfig = new ConsumerConfig
         {
@@ -90,6 +93,7 @@ public class PaymentTicketConsumer : BackgroundService
             List<ConsumeResult<Ignore, string>> messagesToProcess;
             lock (_lock)
             {
+                // Evita que multiplas Threads manipule o mesmo Buffer
                 if (_buffer.Count == 0) return;
                 messagesToProcess = new List<ConsumeResult<Ignore, string>>(_buffer);
                 _buffer.Clear();
@@ -97,12 +101,20 @@ public class PaymentTicketConsumer : BackgroundService
 
             using var scope = _serviceProvider.CreateScope();
             ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
+            IGatewayApiService? gatewayApiService = scope.ServiceProvider.GetService<IGatewayApiService>();
 
             if (ticketRepository is not null)
             {
-                var tickets = messagesToProcess.Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value)).ToList();
+                var tickets = messagesToProcess
+                    .Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value))
+                    .ToList();
                 await ticketRepository.BulkCreate(tickets);
                 _logger.LogInformation($"[BULK_INSERT] {tickets.Count} tickets inserted!");
+
+                Task.Run(async () =>
+                {
+                    foreach (var ticket in tickets) await gatewayApiService.CreateTransactionPix(ticket);
+                });
 
                 _consumer.Commit(messagesToProcess.Select(m => m.TopicPartitionOffset));
             }

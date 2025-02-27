@@ -30,6 +30,7 @@ public static class DependencyInjectionConfig
         services.AddTransient<IEventService, EventService>();
         services.AddTransient<ITicketService, TicketService>();
         services.AddTransient<IKafkaService, KafkaService>();
+        services.AddTransient<IGatewayApiService, GatewayApiService>();
 
         return services;
     }
