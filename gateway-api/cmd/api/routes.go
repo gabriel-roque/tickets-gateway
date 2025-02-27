@@ -6,7 +6,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// TODO: Middleware X-API-KEY
 func TransactionPixRoutes(router *gin.Engine) {
 	transactionPixRoutes := router.Group("/transaction-pix")
 
