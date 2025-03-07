@@ -34,7 +34,7 @@ public class GatewayApiService : IGatewayApiService
             var transaction = new TransactonPixDTO()
             {
                 name = $"{ticket.EventId}-{ticket.OwnerId}-ticket",
-                value = 1000, // TODO: Recuperar o valor do evento
+                value = ticket.Valeu,
                 external_id = ticket.Id.ToString()
             };
             

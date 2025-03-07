@@ -21,9 +21,9 @@ spec:
             - containerPort: 5000
           env:
             - name: ConnectionStrings__TicketDB
-              value: "Server=192.168.10.117,1433;Database=tickets;User Id=sa;Password=Pass@word;TrustServerCertificate=true;Max Pool Size=200;Connection Timeout=60;"
+              value: "Server=192.168.10.118,1433;Database=tickets;User Id=sa;Password=Pass@word;TrustServerCertificate=true;Max Pool Size=200;Connection Timeout=60;"
             - name: Kafka__Url
-              value: "192.168.10.117:9092"
+              value: "192.168.10.118:9092"
             - name: Jwt__Key
               value: "YcxjOMewdFfeZFQm5iGAYxTjR23Z93rLbyZucty3"
             - name: Jwt__Issuer

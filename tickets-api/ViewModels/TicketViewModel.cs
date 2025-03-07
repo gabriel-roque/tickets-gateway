@@ -11,6 +11,7 @@ public class TicketViewModel
     
     public User? Owner { get; set; }
     public Guid OwnerId { get; set; }
+    public int Value { get; set; }
     
     public TicketStatusEnum Status { get; set; }
     

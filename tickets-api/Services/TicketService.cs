@@ -8,7 +8,8 @@ namespace TicketsApi.Services;
 
 public class TicketService (
         IKafkaService kafkaService,
-        ITicketRepository ticketRepository
+        ITicketRepository ticketRepository,
+        IEventRepository eventRepository
     )
     : ITicketService
 {
@@ -16,6 +17,9 @@ public class TicketService (
 
     public async Task<Ticket> Create(Ticket ticket)
     {
+        var _event = await eventRepository.Get(ticket.EventId);
+        ticket.Valeu = _event.PriceTicket;
+        
         await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
         
         return ticket;

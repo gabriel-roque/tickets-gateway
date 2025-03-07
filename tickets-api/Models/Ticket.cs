@@ -12,6 +12,7 @@ public class Ticket : Entity, IView<TicketViewModel, Ticket>
     
     public User? Owner { get; set; }
     public Guid OwnerId { get; set; }
+    public int Valeu { get; set; }
 
     public TicketStatusEnum Status { get; set; } = TicketStatusEnum.Pending;
     public PaymentMethodEnum PaymentMethod { get; set; }
@@ -23,7 +24,8 @@ public class Ticket : Entity, IView<TicketViewModel, Ticket>
             Id = model.Id,
             Event = model.Event is not null ? Event.ToGetView(model.Event) : null,
             EventId = model.EventId,
-            OwnerId = model.OwnerId
+            OwnerId = model.OwnerId,
+            Value = model.Valeu
         };
     }
 
