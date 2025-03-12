@@ -7,10 +7,10 @@ using TicketsApi.Models;
 
 namespace TicketsApi.Consumers;
 
-public class PaymentTicketConsumer : BackgroundService
+public class TicketOrderConsumer : BackgroundService
 {
     private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<PaymentTicketConsumer> _logger;
+    private readonly ILogger<TicketOrderConsumer> _logger;
     private readonly IConsumer<Ignore, string> _consumer;
     private readonly List<ConsumeResult<Ignore, string>> _buffer = new();
     private readonly object _lock = new();
@@ -19,7 +19,7 @@ public class PaymentTicketConsumer : BackgroundService
     private const int BULK_SIZE = 1;
     private static readonly TimeSpan TIME_LIMIT = TimeSpan.FromSeconds(2);
 
-    public PaymentTicketConsumer(IServiceProvider serviceProvider, ILogger<PaymentTicketConsumer> logger,
+    public TicketOrderConsumer(IServiceProvider serviceProvider, ILogger<TicketOrderConsumer> logger,
         IConfiguration config)
     {
         _logger = logger;
@@ -28,24 +28,24 @@ public class PaymentTicketConsumer : BackgroundService
         var kafkaUrl = config.GetValue<string>("Kafka:Url") ??
                        Environment.GetEnvironmentVariable("Kafka__Url");
 
-        _logger.LogInformation("PaymentTicketConsumer - Kafka URL: {Url}", kafkaUrl);
+        _logger.LogInformation("TicketOrderConsumer - Kafka URL: {Url}", kafkaUrl);
 
         var kafkaConfig = new ConsumerConfig
         {
             BootstrapServers = kafkaUrl,
-            GroupId = $"{KafkaTopicsEnum.PaymentTicket}-group",
+            GroupId = $"{KafkaTopicsEnum.TicketOrder}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = false,
             MaxInFlight = 10,
         };
 
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
-        _consumer.Subscribe(KafkaTopicsEnum.PaymentTicket);
+        _consumer.Subscribe(KafkaTopicsEnum.TicketOrder);
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation($"[PaymentTicketConsumer] Starting Consumer...");
+        _logger.LogInformation($"[TicketOrderConsumer] Starting Consumer...");
 
         // Rodar em Threads Diferentes
         Task.Run(() => ConsumeKafka(stoppingToken), stoppingToken);
@@ -100,19 +100,24 @@ public class PaymentTicketConsumer : BackgroundService
             }
 
             using var scope = _serviceProvider.CreateScope();
-            IGatewayApiService? gatewayApiService = scope.ServiceProvider.GetService<IGatewayApiService>();
+            ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
+            IKafkaService? kafkaService = scope.ServiceProvider.GetService<IKafkaService>();
 
+            if (ticketRepository is not null)
+            {
                 var tickets = messagesToProcess
                     .Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value))
                     .ToList();
+                await ticketRepository.BulkCreate(tickets);
+                _logger.LogInformation($"[BULK_INSERT] {tickets.Count} tickets inserted!");
 
                 Task.Run(async () =>
                 {
-                    foreach (var ticket in tickets)
-                        await gatewayApiService.CreateTransactionPix(ticket);
+                    foreach (var ticket in tickets) await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
                 });
 
                 _consumer.Commit(messagesToProcess.Select(m => m.TopicPartitionOffset));
+            }
         }
         catch (Exception ex)
         {

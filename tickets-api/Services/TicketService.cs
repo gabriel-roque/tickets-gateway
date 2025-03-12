@@ -20,7 +20,7 @@ public class TicketService (
         var _event = await eventRepository.Get(ticket.EventId);
         ticket.Valeu = _event.PriceTicket;
         
-        await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
+        await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.TicketOrder, JsonSerializer.Serialize(ticket));
         
         return ticket;
     }

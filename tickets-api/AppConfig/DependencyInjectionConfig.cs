@@ -45,6 +45,7 @@ public static class DependencyInjectionConfig
 
     public static IServiceCollection RegisterConsumers(this IServiceCollection services)
     {
+        services.AddHostedService<TicketOrderConsumer>();
         services.AddHostedService<PaymentTicketConsumer>();
         
         return services;
