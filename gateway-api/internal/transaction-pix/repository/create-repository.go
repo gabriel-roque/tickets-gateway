@@ -22,13 +22,17 @@ func (r *Repository) Save(transaction *transaction_interfaces.CreateTransactionP
 
 	if errCreate != nil {
 		fmt.Println("Failed in create transaction")
+		fmt.Println(errCreate)
 	}
 
 	transactionCreated, errGet := r.GetById(transactionId)
 
 	if errGet != nil {
 		fmt.Println("Failed in create transaction")
+		fmt.Println(errGet)
 	}
+
+	r.db.Close()
 
 	fmt.Println(transactionCreated)
 
