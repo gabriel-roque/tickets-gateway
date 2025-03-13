@@ -5,10 +5,7 @@ export let options = {
   scenarios: {
     stress_test: {
       executor: 'ramping-vus',
-      stages: [
-        { duration: '30s', target: 500 },
-        { duration: '60s', target: 1000 },
-      ],
+      stages: [{ duration: '30s', target: 100 }],
     },
   },
 };
