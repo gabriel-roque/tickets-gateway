@@ -23,6 +23,7 @@ public class GatewayApiService : IGatewayApiService
     public GatewayApiService(IConfiguration config, ILogger<GatewayApiService> logger)
     {
         _config = config;
+        _logger = logger;
         client.BaseAddress = new Uri(_config["GatewayApi:Url"]);
         client.DefaultRequestHeaders.Add("x-api-key", _config["GatewayApi:XApiKey"]);
     }

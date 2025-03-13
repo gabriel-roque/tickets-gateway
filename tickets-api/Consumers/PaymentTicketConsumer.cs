@@ -36,7 +36,7 @@ public class PaymentTicketConsumer : BackgroundService
             GroupId = $"{KafkaTopicsEnum.PaymentTicket}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = false,
-            MaxInFlight = 10,
+            MaxInFlight = BULK_SIZE,
         };
 
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
@@ -106,17 +106,27 @@ public class PaymentTicketConsumer : BackgroundService
                     .Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value))
                     .ToList();
 
-                Task.Run(async () =>
+
+                Parallel.ForEach(tickets, new ParallelOptions()
                 {
-                    foreach (var ticket in tickets)
+                    MaxDegreeOfParallelism = 4
+                }, async void (ticket) =>
+                {
+                    try
+                    {
                         await gatewayApiService.CreateTransactionPix(ticket);
+                    }
+                    catch (Exception e)
+                    {
+                        _logger.LogError($"[GATEWAY_API_ERROR] {e.Message}");
+                    }
                 });
 
                 _consumer.Commit(messagesToProcess.Select(m => m.TopicPartitionOffset));
         }
         catch (Exception ex)
         {
-            _logger.LogError($"[BULK_INSERT_ERROR] {ex.Message}");
+            _logger.LogError($"[PAYMENT_TICKET_ERROR] {ex.Message}");
         }
         finally
         {

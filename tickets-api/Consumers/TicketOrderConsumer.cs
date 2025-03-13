@@ -16,7 +16,7 @@ public class TicketOrderConsumer : BackgroundService
     private readonly object _lock = new();
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
-    private const int BULK_SIZE = 1;
+    private const int BULK_SIZE = 10;
     private static readonly TimeSpan TIME_LIMIT = TimeSpan.FromSeconds(2);
 
     public TicketOrderConsumer(IServiceProvider serviceProvider, ILogger<TicketOrderConsumer> logger,
@@ -36,7 +36,7 @@ public class TicketOrderConsumer : BackgroundService
             GroupId = $"{KafkaTopicsEnum.TicketOrder}-group",
             AutoOffsetReset = AutoOffsetReset.Earliest,
             EnableAutoCommit = false,
-            MaxInFlight = 10,
+            MaxInFlight = BULK_SIZE,
         };
 
         _consumer = new ConsumerBuilder<Ignore, string>(kafkaConfig).Build();
