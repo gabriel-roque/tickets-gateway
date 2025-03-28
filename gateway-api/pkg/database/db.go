@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -63,6 +64,11 @@ func CreateConnection() (*gorm.DB, error) {
 		log.Printf("Erro ao conectar ao banco de dados: %v", err)
 		return nil, err
 	}
+
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxOpenConns(10)
+	sqlDB.SetMaxIdleConns(5)
+	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
 	log.Println("Conexão com o banco de dados estabelecida com sucesso.")
 	return db, nil

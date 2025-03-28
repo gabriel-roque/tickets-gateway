@@ -2,6 +2,7 @@ package transaction_pix_repository
 
 import (
 	"fmt"
+	"log"
 
 	transaction_pix "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix"
 	transaction_interfaces "github.com/gabriel-roque/tickets-gateway/pkg/interfaces"
@@ -23,24 +24,23 @@ func (r *Repository) Save(transactionDTO *transaction_interfaces.CreateTransacti
 		Status:     false,
 	}
 
-	errCreate := r.db.Create(&transaction)
+	create := r.db.Create(&transaction)
 
 	transactionId := transaction.Id
 
-	if errCreate != nil {
-		fmt.Println("Failed in create transaction")
+	if create.Error != nil {
+		log.Printf("Erro ao criar transação: %v", create.Error)
+	} else {
+		log.Println("Transação criada com sucesso!")
 	}
 
 	transactionCreated, errGet := r.GetById(transactionId)
 
 	if errGet != nil {
-		fmt.Println("Failed in create transaction")
-		// fmt.Println(errGet)
+		fmt.Println("FAILED_GET_TRANSACTION", errGet)
 	}
 
 	sql.Close()
-
-	// fmt.Println(transactionCreated)
 
 	return transactionCreated
 }
