@@ -7,16 +7,7 @@ import (
 func (r *Repository) GetById(id string) (transaction_pix.TransactionPix, error) {
 	var transaction transaction_pix.TransactionPix
 
-	queryGet := `
-        SELECT id, name, external_id, value, qr_code
-        FROM transaction_pix
-        WHERE id = $1
-    `
+	r.db.First(&transaction, "id = ?", id)
 
-	err := r.db.Get(&transaction, queryGet, id)
-	if err != nil {
-		return transaction_pix.TransactionPix{}, err
-	}
-
-	return transaction, nil
+	return transaction, r.db.Error
 }

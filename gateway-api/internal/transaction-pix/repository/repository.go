@@ -2,14 +2,14 @@ package transaction_pix_repository
 
 import (
 	"github.com/gabriel-roque/tickets-gateway/pkg/database"
-	"github.com/jmoiron/sqlx"
+	"gorm.io/gorm"
 )
 
 type Repository struct {
-	db *sqlx.DB
+	db *gorm.DB
 }
 
 func NewTransactionPixRepository() *Repository {
-	db := database.CreateConnection()
+	db, _ := database.CreateConnection()
 	return &Repository{db}
 }

@@ -5,8 +5,8 @@ import (
 	"log"
 	"os"
 
-	"github.com/jmoiron/sqlx"
-	_ "github.com/lib/pq"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
 type DatabaseConfig struct {
@@ -25,40 +25,45 @@ func loadConfig() (DatabaseConfig, string) {
 		Password: os.Getenv("DB_PASSWORD"),
 		Dbname:   os.Getenv("DB_NAME"),
 	}
-
 	connectionString := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
 		config.Host, config.Port, config.User, config.Password, config.Dbname,
 	)
-
 	return config, connectionString
 }
 
 func DatabasePing() bool {
-	_, connectionString := loadConfig()
-
-	db, err := sqlx.Open("postgres", connectionString)
+	db, err := CreateConnection()
 	if err != nil {
-		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
-	}
-	defer db.Close()
-
-	err = db.Ping()
-	if err != nil {
-		log.Fatalf("Erro ao verificar a conexão com o banco de dados: %v", err)
+		return false
 	}
 
-	fmt.Println("Conexão com o banco de dados estabelecida!")
+	sqlDB, err := db.DB()
+	if err != nil {
+		log.Printf("Erro ao obter a instância SQL do banco de dados: %v", err)
+		return false
+	}
+	defer sqlDB.Close()
+
+	err = sqlDB.Ping()
+	if err != nil {
+		log.Printf("Erro ao verificar a conexão com o banco de dados: %v", err)
+		return false
+	}
+
+	log.Println("Banco de dados respondendo corretamente.")
 	return true
 }
 
-func CreateConnection() *sqlx.DB {
+func CreateConnection() (*gorm.DB, error) {
 	_, connectionString := loadConfig()
 
-	db, err := sqlx.Open("postgres", connectionString)
+	db, err := gorm.Open(postgres.Open(connectionString), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Erro ao conectar ao banco de dados: %v", err)
+		log.Printf("Erro ao conectar ao banco de dados: %v", err)
+		return nil, err
 	}
 
-	return db
+	log.Println("Conexão com o banco de dados estabelecida com sucesso.")
+	return db, nil
 }
