@@ -6,10 +6,9 @@ export let options = {
     stress_test: {
       executor: 'ramping-vus',
       stages: [
-        { duration: '10s', target: 50 },
-        { duration: '30s', target: 100 },
-        { duration: '10s', target: 0 },
-        { duration: '60s', target: 200 },
+        { duration: '10s', target: 100 },
+        { duration: '10s', target: 500 },
+        { duration: '10s', target: 1000 },
       ],
     },
     steady_load: {
@@ -33,7 +32,7 @@ export default function () {
     headers: {
       'Content-Type': 'application/json',
       Authorization:
-        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY2MjgzOTliLTVmNWUtNDRhMC04YzBjLTA4ZGQ1ZGI2YmU0NSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJBZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGVtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiZXhwIjoxNzQxOTgwOTU0LCJpc3MiOiJodHRwczovL3RpY2tldHMtYXBpIiwiYXVkIjoiaHR0cHM6Ly90aWNrZXRzLWFwaSJ9.6m2RvNG4lH5BKolWDCOgMPv0luO6w5oHjPQQMTgN7Xk',
+        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY2MjgzOTliLTVmNWUtNDRhMC04YzBjLTA4ZGQ1ZGI2YmU0NSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJBZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGVtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiZXhwIjoxNzQzMjgyNDMwLCJpc3MiOiJodHRwczovL3RpY2tldHMtYXBpIiwiYXVkIjoiaHR0cHM6Ly90aWNrZXRzLWFwaSJ9.TNNfFdYkRNzUE5UGqBOgoT6xyPJOCijhCsSewwucdDc',
     },
   };
 
