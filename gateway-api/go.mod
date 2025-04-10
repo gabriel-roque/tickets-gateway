@@ -1,4 +1,4 @@
-module github.com/gabriel-roque/tickets-gateway
+module github.com/gabriel-roque/gateway-api
 
 go 1.23.4
 

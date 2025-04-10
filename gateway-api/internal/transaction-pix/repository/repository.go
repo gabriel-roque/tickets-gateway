@@ -1,7 +1,7 @@
 package transaction_pix_repository
 
 import (
-	"github.com/gabriel-roque/tickets-gateway/pkg/database"
+	"github.com/gabriel-roque/gateway-api/pkg/database"
 	"gorm.io/gorm"
 )
 

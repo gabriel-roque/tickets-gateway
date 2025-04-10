@@ -1,8 +1,8 @@
 package main
 
 import (
-	"github.com/gabriel-roque/tickets-gateway/pkg/database"
-	"github.com/gabriel-roque/tickets-gateway/pkg/env"
+	"github.com/gabriel-roque/gateway-api/pkg/database"
+	"github.com/gabriel-roque/gateway-api/pkg/env"
 	"github.com/gin-gonic/gin"
 )
 

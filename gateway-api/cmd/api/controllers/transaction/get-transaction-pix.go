@@ -3,7 +3,7 @@ package controllers
 import (
 	"net/http"
 
-	transaction_pix_handlers "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix/handlers"
+	transaction_pix_handlers "github.com/gabriel-roque/gateway-api/internal/transaction-pix/handlers"
 	"github.com/gin-gonic/gin"
 )
 

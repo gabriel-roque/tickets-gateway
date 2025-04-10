@@ -1,8 +1,8 @@
 package transaction_pix_handlers
 
 import (
-	repository_interfaces "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix/interfaces"
-	repository "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix/repository"
+	repository_interfaces "github.com/gabriel-roque/gateway-api/internal/transaction-pix/interfaces"
+	repository "github.com/gabriel-roque/gateway-api/internal/transaction-pix/repository"
 )
 
 type TransactionPixHandler struct {

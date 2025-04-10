@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"log"
 
-	transaction_pix "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix"
-	transaction_interfaces "github.com/gabriel-roque/tickets-gateway/pkg/interfaces"
-	"github.com/gabriel-roque/tickets-gateway/pkg/qrcode"
+	transaction_pix "github.com/gabriel-roque/gateway-api/internal/transaction-pix"
+	transaction_interfaces "github.com/gabriel-roque/gateway-api/pkg/interfaces"
+	"github.com/gabriel-roque/gateway-api/pkg/qrcode"
 	"github.com/google/uuid"
 )
 

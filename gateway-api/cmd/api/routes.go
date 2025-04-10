@@ -1,8 +1,8 @@
 package main
 
 import (
-	controllers "github.com/gabriel-roque/tickets-gateway/cmd/api/controllers/transaction"
-	"github.com/gabriel-roque/tickets-gateway/pkg/middlewares"
+	controllers "github.com/gabriel-roque/gateway-api/cmd/api/controllers/transaction"
+	"github.com/gabriel-roque/gateway-api/pkg/middlewares"
 	"github.com/gin-gonic/gin"
 )
 

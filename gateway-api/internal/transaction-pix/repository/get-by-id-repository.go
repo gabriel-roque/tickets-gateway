@@ -1,7 +1,7 @@
 package transaction_pix_repository
 
 import (
-	transaction_pix "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix"
+	transaction_pix "github.com/gabriel-roque/gateway-api/internal/transaction-pix"
 )
 
 func (r *Repository) GetById(id string) (transaction_pix.TransactionPix, error) {

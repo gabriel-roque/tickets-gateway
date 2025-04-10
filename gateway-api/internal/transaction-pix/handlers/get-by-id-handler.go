@@ -3,7 +3,7 @@ package transaction_pix_handlers
 import (
 	"errors"
 
-	transaction_pix "github.com/gabriel-roque/tickets-gateway/internal/transaction-pix"
+	transaction_pix "github.com/gabriel-roque/gateway-api/internal/transaction-pix"
 )
 
 func (u *TransactionPixHandler) GetById(id string) (transaction_pix.TransactionPix, error) {
