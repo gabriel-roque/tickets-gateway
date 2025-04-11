@@ -12,7 +12,6 @@ FROM alpine:latest
 RUN adduser -D -g '' appuser
 WORKDIR /app
 COPY --from=builder /app/gateway-api .
-COPY .env .env
 USER appuser
 EXPOSE 3000
 
