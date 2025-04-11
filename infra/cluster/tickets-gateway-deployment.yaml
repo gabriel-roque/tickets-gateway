@@ -1,3 +1,53 @@
+# gateway-api deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-api
+  labels:
+    app: gateway-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: gateway-api
+  template:
+    metadata:
+      labels:
+        app: gateway-api
+    spec:
+      containers:
+        - name: gateway-api
+          image: gabrielroque/gateway-api:latest
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DB_HOST
+              value: "192.168.10.169"
+            - name: DB_PORT
+              value: "6432"
+            - name: DB_USER
+              value: "root"
+            - name: DB_PASSWORD
+              value: "pass@#word"
+            - name: DB_NAME
+              value: "gateway-api"
+            - name: X_API_KEY
+              value: "master_api_key"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-api-service
+spec:
+  selector:
+    app: gateway-api
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 3000
+  type: ClusterIP # <- Aqui muda de LoadBalancer para comunicação interna
+---
+# tickets-api deployment
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,7 +81,7 @@ spec:
             - name: Jwt__Audience
               value: "https://tickets-api"
             - name: GatewayApi__Url
-              value: "http://192.168.10.117:3000" # Your local ip 
+              value: "http://gateway-api-service" # ← Aqui é o pulo do gato
             - name: GatewayApi__XApiKey
               value: "master_api_key"
 ---
