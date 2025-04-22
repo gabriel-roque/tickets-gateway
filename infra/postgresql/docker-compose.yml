@@ -3,16 +3,41 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15
-    container_name: postgres_container
+    container_name: postgres_15
     restart: always
     environment:
       POSTGRES_USER: root
       POSTGRES_PASSWORD: pass@#word
-      POSTGRES_DB: gateway-api
+      POSTGRES_DB: casa-os-postgres
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./postgresql.conf:/var/lib/postgresql/data/postgresql.conf
+    mem_limit: 512m
+    memswap_limit: 512m
+    networks:
+      - database
+
+  pgbouncer:
+    image: edoburu/pgbouncer
+    container_name: pgbouncer
+    restart: always
+    ports:
+      - '6432:6432'
+    depends_on:
+      - postgres
+    networks:
+      - database
+    volumes:
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini
+    mem_limit: 512m
+    memswap_limit: 512m
+
+networks:
+  database:
+    driver: bridge
 
 volumes:
   postgres_data:

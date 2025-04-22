@@ -3,9 +3,8 @@ version: '3.8'
 services:
   sqldata:
     image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sql_server_2019
     restart: unless-stopped
-    networks:
-      - tickets-api-network
     environment:
       - SA_PASSWORD=Pass@word
       - ACCEPT_EULA=Y
@@ -13,11 +12,9 @@ services:
       - '1433:1433'
     volumes:
       - sqlserver-data:/var/opt/mssql
+    mem_limit: 2048m
+    memswap_limit: 2048m
 
 volumes:
   sqlserver-data:
     driver: local
-
-networks:
-  tickets-api-network:
-    driver: bridge
