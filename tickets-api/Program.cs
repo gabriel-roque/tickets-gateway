@@ -80,6 +80,7 @@ builder.Services.AddSingleton(mapper);
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+builder.Services.AddAllElasticApm();
 
 var app = builder.Build();
 
