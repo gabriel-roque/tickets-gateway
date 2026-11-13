@@ -5,6 +5,6 @@ import (
 	interfaces "github.com/gabriel-roque/gateway-api/pkg/interfaces"
 )
 
-func (u *TransactionPixHandler) Create(transaction interfaces.CreateTransactionPix) transaction_pix.TransactionPix {
+func (u *TransactionPixHandler) Create(transaction interfaces.CreateTransactionPix) (transaction_pix.TransactionPix, error) {
 	return u.repository.Save(&transaction)
 }

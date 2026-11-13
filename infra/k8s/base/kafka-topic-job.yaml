@@ -1,0 +1,24 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: eventsphere-kafka-topics
+  namespace: eventsphere
+spec:
+  backoffLimit: 12
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels: { app: eventsphere, role: kafka-topics }
+    spec:
+      restartPolicy: OnFailure
+      containers:
+        - name: topics
+          image: redpandadata/redpanda:v24.3.6
+          command: ["/bin/sh", "-c"]
+          args:
+            - >-
+              rpk topic create eventsphere.commands.orders --brokers kafka.eventsphere.svc.cluster.local:9092 --partitions 24 --replicas 1 || true;
+              rpk topic create eventsphere.events --brokers kafka.eventsphere.svc.cluster.local:9092 --partitions 24 --replicas 1 || true
+          resources:
+            requests: { cpu: 50m, memory: 64Mi }
+            limits: { cpu: 250m, memory: 256Mi }

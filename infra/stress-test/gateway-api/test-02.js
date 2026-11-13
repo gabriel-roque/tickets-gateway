@@ -22,7 +22,7 @@ export default function () {
     external_id: uuidv4(),
   });
 
-  let params = { headers: { 'x-api-key': 'master_api_key' } };
+  let params = { headers: { 'x-api-key': __ENV.API_KEY || '' } };
 
   let res = http.post(url, payload, params);
 

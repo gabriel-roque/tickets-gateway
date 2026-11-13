@@ -1,55 +1,44 @@
 using System.Text;
-using System.Text.Json.Serialization;
-using Microsoft.OpenApi.Extensions;
 using Newtonsoft.Json;
 using TicketsApi.Interfaces.Services;
 using TicketsApi.Models;
 
 namespace TicketsApi.Services;
 
-class TransactonPixDTO
-{
-    public string name {get; set;}
-    public int value {get; set;}
-    public string external_id {get; set;}
-} 
+internal sealed record TransactionPixDto(string name, int value, string external_id);
 
 public class GatewayApiService : IGatewayApiService
 {
-    HttpClient client = new HttpClient();
-    private readonly IConfiguration _config;
-    private readonly ILogger<GatewayApiService> _logger;
-    
-    public GatewayApiService(IConfiguration config, ILogger<GatewayApiService> logger)
+    private readonly HttpClient client;
+    private readonly ILogger<GatewayApiService> logger;
+
+    internal HttpClient ConfiguredClient => client;
+
+    public GatewayApiService(HttpClient client, ILogger<GatewayApiService> logger)
     {
-        _config = config;
-        _logger = logger;
-        client.BaseAddress = new Uri(_config["GatewayApi:Url"]);
-        client.DefaultRequestHeaders.Add("x-api-key", _config["GatewayApi:XApiKey"]);
+        this.client = client;
+        this.logger = logger;
     }
-    
-    public Task<bool> CreateTransactionPix(Ticket ticket)
+
+    public async Task<bool> CreateTransactionPix(Ticket ticket)
     {
         try
         {
-            var transaction = new TransactonPixDTO()
-            {
-                name = $"{ticket.EventId}-{ticket.OwnerId}-ticket",
-                value = ticket.Valeu,
-                external_id = ticket.Id.ToString()
-            };
+            var transaction = new TransactionPixDto(
+                $"{ticket.EventId}-{ticket.OwnerId}-ticket", ticket.Valeu, ticket.Id.ToString());
             
             var content = new StringContent(JsonConvert.SerializeObject(transaction), Encoding.UTF8, "application/json");
-            var response = client.PostAsync("/transaction-pix", content).Result;
+            using var response = await client.PostAsync("/transaction-pix", content);
             
-            _logger.LogInformation(JsonConvert.DeserializeObject(response.Content.ReadAsStringAsync().Result).ToString());
+            var responseBody = await response.Content.ReadAsStringAsync();
+            logger.LogInformation("Gateway response: {Response}", responseBody);
 
-            return Task.FromResult(response.IsSuccessStatusCode);
+            return response.IsSuccessStatusCode;
         }
         catch (Exception e)
         {
-            _logger.LogError(e,"FAILED_TRANSACTION_PIX_API");
-            return Task.FromResult(false);
+            logger.LogError(e,"FAILED_TRANSACTION_PIX_API");
+            return false;
         }
     }
 }

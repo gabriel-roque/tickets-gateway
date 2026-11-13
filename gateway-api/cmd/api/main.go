@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/gabriel-roque/gateway-api/pkg/database"
 	"github.com/gabriel-roque/gateway-api/pkg/env"
 	"github.com/gin-gonic/gin"
@@ -9,6 +11,10 @@ import (
 
 func main() {
 	env.LoadEnvs()
+	if err := database.Migrate(); err != nil {
+		log.Fatalf("database migration failed: %v", err)
+	}
+	defer database.CloseConnection()
 	router := gin.Default()
 	router.Use(apmgin.Middleware(router))
 

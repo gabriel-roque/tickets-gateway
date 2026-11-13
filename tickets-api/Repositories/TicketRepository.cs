@@ -28,11 +28,17 @@ public class TicketRepository(
         return ticket;
     }
 
-    public Task BulkCreate(List<Ticket> tickets)
+    public async Task BulkCreate(List<Ticket> tickets)
     {
-        database.Ticket.AddRange(tickets);
-        
-        return database.SaveChangesAsync();
+        var uniqueTickets = tickets.GroupBy(ticket => ticket.Id).Select(group => group.Last()).ToList();
+        var ids = uniqueTickets.Select(ticket => ticket.Id).ToArray();
+        var existing = await database.Ticket.AsNoTracking()
+            .Where(ticket => ids.Contains(ticket.Id))
+            .Select(ticket => ticket.Id)
+            .ToListAsync();
+        var existingIds = existing.ToHashSet();
+        database.Ticket.AddRange(uniqueTickets.Where(ticket => !existingIds.Contains(ticket.Id)));
+        await database.SaveChangesAsync();
     }
 
     public async Task<Ticket> Update(Ticket ticket)

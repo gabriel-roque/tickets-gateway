@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  generateName: eventsphere-replay-
+  namespace: eventsphere
+spec:
+  backoffLimit: 1
+  template:
+    metadata:
+      labels: { app: eventsphere, role: replay }
+    spec:
+      restartPolicy: Never
+      serviceAccountName: eventsphere
+      containers:
+        - name: replay
+          image: eventsphere-api:1.0.0
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: replay }

@@ -5,9 +5,11 @@ import (
 )
 
 func (r *Repository) GetById(id string) (transaction_pix.TransactionPix, error) {
+	if r.initError != nil {
+		return transaction_pix.TransactionPix{}, r.initError
+	}
 	var transaction transaction_pix.TransactionPix
 
-	r.db.First(&transaction, "id = ?", id)
-
-	return transaction, r.db.Error
+	result := r.db.First(&transaction, "id = ?", id)
+	return transaction, result.Error
 }

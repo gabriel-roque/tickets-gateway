@@ -7,7 +7,7 @@ RUN go mod download
 COPY . .
 RUN go build -o gateway-api ./cmd/api
 
-FROM alpine:latest
+FROM alpine:3.20
 
 RUN adduser -D -g '' appuser
 WORKDIR /app

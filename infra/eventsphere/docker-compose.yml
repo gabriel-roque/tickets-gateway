@@ -1,0 +1,193 @@
+x-common-env: &common
+  ConnectionStrings__WriteDb: Server=sqlserver,1433;Database=${EVENTSPHERE_WRITE_DB_NAME:-eventsphere-write};User Id=sa;Password=${EVENTSPHERE_DB_PASSWORD};TrustServerCertificate=true
+  ConnectionStrings__ReadDb: Server=sqlserver,1433;Database=${EVENTSPHERE_READ_DB_NAME:-eventsphere-read};User Id=sa;Password=${EVENTSPHERE_DB_PASSWORD};TrustServerCertificate=true
+  Kafka__BootstrapServers: kafka:9092
+  Commands__AsyncIngress: "true"
+  Reservations__TtlMinutes: ${EVENTSPHERE_RESERVATION_TTL_MINUTES:-30}
+  SeatLocks__TtlSeconds: ${EVENTSPHERE_SEAT_LOCK_TTL_SECONDS:-120}
+  Security__ApiKey: ${EVENTSPHERE_API_KEY:?Set EVENTSPHERE_API_KEY}
+  Security__AdminApiKey: ${EVENTSPHERE_ADMIN_API_KEY:-${EVENTSPHERE_API_KEY}}
+  Security__JwtSigningKey: ${EVENTSPHERE_JWT_SIGNING_KEY:?Set EVENTSPHERE_JWT_SIGNING_KEY}
+  Security__JwtIssuer: eventsphere
+  Security__JwtAudience: eventsphere-api
+  Logging__LogLevel__Default: Warning
+
+x-api-resources: &api-resources
+  cpus: "0.35"
+  mem_limit: 320m
+  mem_reservation: 128m
+
+x-worker-resources: &worker-resources
+  cpus: "0.25"
+  mem_limit: 320m
+  mem_reservation: 128m
+
+services:
+  sqlserver:
+    cpus: "1.50"
+    mem_limit: 3g
+    mem_reservation: 2g
+    image: mcr.microsoft.com/mssql/server:2022-CU14-ubuntu-22.04
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: ${EVENTSPHERE_DB_PASSWORD:?Set EVENTSPHERE_DB_PASSWORD}
+      MSSQL_MEMORY_LIMIT_MB: "2304"
+    ports: ["1433:1433"]
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P \"$${MSSQL_SA_PASSWORD}\" -C -Q 'SELECT 1' || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    volumes: ["eventsphere-sql:/var/opt/mssql"]
+
+  kafka:
+    cpus: "1.50"
+    mem_limit: 2560m
+    mem_reservation: 2g
+    image: redpandadata/redpanda:v24.3.6
+    command:
+      - redpanda
+      - start
+      - --overprovisioned
+      - --smp=2
+      - --memory=2G
+      - --reserve-memory=0M
+      - --node-id=0
+      - --check=false
+      - --kafka-addr=PLAINTEXT://0.0.0.0:9092
+      - --advertise-kafka-addr=PLAINTEXT://kafka:9092
+    ports: ["9092:9092"]
+    healthcheck:
+      test: ["CMD-SHELL", "rpk cluster health | grep -q Healthy"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  kafka-init:
+    cpus: "0.25"
+    mem_limit: 256m
+    image: redpandadata/redpanda:v24.3.6
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - >-
+        rpk topic create eventsphere.commands.orders --brokers kafka:9092 --partitions 24 --replicas 1 || true;
+        rpk topic create eventsphere.events --brokers kafka:9092 --partitions 24 --replicas 1 || true
+    depends_on:
+      kafka: { condition: service_healthy }
+
+  migration:
+    cpus: "0.35"
+    mem_limit: 512m
+    build:
+      context: ../..
+      dockerfile: src/EventSphere.Api/Dockerfile
+    environment:
+      <<: *common
+      EventSphere__Role: migration
+    depends_on:
+      sqlserver: { condition: service_healthy }
+
+  command-api:
+    <<: *api-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: command
+    depends_on:
+      migration: { condition: service_completed_successfully }
+      kafka-init: { condition: service_completed_successfully }
+    expose: ["8080"]
+
+  query-api:
+    <<: *api-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: query
+    depends_on:
+      migration: { condition: service_completed_successfully }
+    ports: ["8081:8080"]
+
+  saga-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: saga
+    depends_on:
+      migration: { condition: service_completed_successfully }
+
+  lifecycle-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: lifecycle
+    depends_on:
+      migration: { condition: service_completed_successfully }
+
+  expiry-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: expiry
+    depends_on:
+      migration: { condition: service_completed_successfully }
+
+  projection-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: projection
+    depends_on:
+      migration: { condition: service_completed_successfully }
+
+  outbox-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: outbox
+    depends_on:
+      migration: { condition: service_completed_successfully }
+      kafka: { condition: service_healthy }
+
+  integration-worker:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: integration
+    depends_on:
+      migration: { condition: service_completed_successfully }
+      kafka: { condition: service_healthy }
+
+  order-consumer:
+    <<: *worker-resources
+    build: { context: ../.., dockerfile: src/EventSphere.Api/Dockerfile }
+    environment:
+      <<: *common
+      EventSphere__Role: order-consumer
+    depends_on:
+      migration: { condition: service_completed_successfully }
+      kafka-init: { condition: service_completed_successfully }
+
+  load-balancer:
+    cpus: "0.35"
+    mem_limit: 256m
+    image: nginx:1.27.3-alpine
+    ulimits:
+      nofile:
+        soft: 131072
+        hard: 131072
+    sysctls:
+      net.core.somaxconn: 65535
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on: [command-api]
+    ports: ["8080:8080"]
+
+volumes:
+  eventsphere-sql:

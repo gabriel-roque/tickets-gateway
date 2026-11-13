@@ -30,7 +30,17 @@ public static class DependencyInjectionConfig
         services.AddTransient<IEventService, EventService>();
         services.AddTransient<ITicketService, TicketService>();
         services.AddTransient<IKafkaService, KafkaService>();
-        services.AddTransient<IGatewayApiService, GatewayApiService>();
+        services.AddHttpClient<IGatewayApiService, GatewayApiService>((provider, client) =>
+        {
+            var configuration = provider.GetRequiredService<IConfiguration>();
+            var url = configuration["GatewayApi:Url"]
+                ?? throw new InvalidOperationException("GatewayApi:Url is required");
+            var apiKey = configuration["GatewayApi:XApiKey"]
+                ?? throw new InvalidOperationException("GatewayApi:XApiKey is required");
+            client.BaseAddress = new Uri(url, UriKind.Absolute);
+            client.DefaultRequestHeaders.Add("x-api-key", apiKey);
+            client.Timeout = TimeSpan.FromSeconds(10);
+        });
 
         return services;
     }

@@ -1,0 +1,24 @@
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: eventsphere-spike-10k
+  namespace: eventsphere
+spec:
+  parallelism: 10
+  script:
+    configMap:
+      name: eventsphere-spike
+      file: spike.js
+  arguments: --tag environment=kubernetes
+  runner:
+    env:
+      - { name: BASE_URL, value: "http://command-api.eventsphere.svc.cluster.local" }
+      - { name: VUS, value: "10000" }
+      - { name: RUN_ID, value: "replace-with-unique-spike-id" }
+      - { name: INVENTORY_IDS, value: "replace-with-comma-separated-bucket-ids" }
+      - name: API_KEY
+        valueFrom:
+          secretKeyRef: { name: eventsphere-secrets, key: Security__ApiKey }
+    resources:
+      requests: { cpu: "1", memory: 512Mi }
+      limits: { cpu: "4", memory: 2Gi }

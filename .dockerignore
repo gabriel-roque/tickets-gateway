@@ -1,0 +1,11 @@
+.git
+**/bin
+**/obj
+artifacts
+.idea
+.vs
+.vscode
+infra/img
+gateway-api
+tickets-api
+tests

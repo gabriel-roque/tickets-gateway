@@ -1,0 +1,37 @@
+{
+  "runId": "final-audit-10k-parallel-v2",
+  "showId": "00000000-0000-4000-8000-00000f9063e7",
+  "buckets": 100,
+  "submitted": 45000,
+  "source": {
+    "capacity": 5000,
+    "reserved": 0,
+    "confirmed": 5000,
+    "available": 0
+  },
+  "projection": {
+    "capacity": 5000,
+    "reserved": 0,
+    "confirmed": 5000,
+    "available": 0
+  },
+  "sagaCounts": [
+    {
+      "status": "Compensated",
+      "count": 40000
+    },
+    {
+      "status": "Completed",
+      "count": 5000
+    }
+  ],
+  "payments": 5000,
+  "activePayments": 5000,
+  "tickets": 5000,
+  "activeTickets": 5000,
+  "pendingOutbox": 0,
+  "deadLetters": 0,
+  "maxPosition": 145448,
+  "checkpoint": 145448,
+  "projectionLag": 0
+}

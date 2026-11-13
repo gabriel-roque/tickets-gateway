@@ -6,6 +6,6 @@ import (
 )
 
 type ITransactionPixRepository interface {
-	Save(transaction *interfaces.CreateTransactionPix) transaction_pix.TransactionPix
+	Save(transaction *interfaces.CreateTransactionPix) (transaction_pix.TransactionPix, error)
 	GetById(id string) (transaction_pix.TransactionPix, error)
 }
