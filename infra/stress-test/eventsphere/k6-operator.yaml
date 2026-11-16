@@ -1,0 +1,32 @@
+# Create the script ConfigMap first:
+# kubectl -n eventsphere create configmap eventsphere-flash-sale \
+#   --from-file=flash-sale.js=infra/stress-test/eventsphere/flash-sale.js
+apiVersion: k6.io/v1alpha1
+kind: TestRun
+metadata:
+  name: eventsphere-flash-sale
+  namespace: eventsphere
+spec:
+  parallelism: 10
+  script:
+    configMap:
+      name: eventsphere-flash-sale
+      file: flash-sale.js
+  arguments: --tag environment=kubernetes
+  runner:
+    env:
+      - { name: BASE_URL, value: "http://command-api.eventsphere.svc.cluster.local" }
+      - { name: VUS, value: "10000" }
+      - { name: ITERATIONS, value: "50000" }
+      - { name: UNIQUE_ORDERS, value: "45000" }
+      - { name: CAPACITY, value: "5000" }
+      - { name: BUCKETS, value: "100" }
+      - { name: DURATION, value: "10s" }
+      - { name: RUN_ID, value: "replace-with-unique-run-id" }
+      - { name: RUN_SEED, value: "261112" }
+      - name: JWT_TOKEN
+        valueFrom:
+          secretKeyRef: { name: eventsphere-secrets, key: Stress__JwtToken }
+    resources:
+      requests: { cpu: "1", memory: 512Mi }
+      limits: { cpu: "4", memory: 2Gi }

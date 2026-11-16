@@ -1,0 +1,24 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: eventsphere
+  namespace: eventsphere
+spec:
+  groups:
+    - name: eventsphere.rules
+      rules:
+        - alert: EventSphereHighCommandLatency
+          expr: histogram_quantile(0.95, sum by (le) (rate(http_server_request_duration_seconds_bucket{service_name="eventsphere"}[5m]))) > 0.3
+          for: 5m
+          labels: { severity: warning }
+          annotations: { summary: "Command API p95 is above 300 ms" }
+        - alert: EventSphereSagaCompensationSpike
+          expr: rate(eventsphere_saga_compensations_total[5m]) > 10
+          for: 2m
+          labels: { severity: warning }
+          annotations: { summary: "Purchase Saga compensation rate is elevated" }
+        - alert: EventSphereOutboxFailure
+          expr: rate(eventsphere_outbox_failures_total[5m]) > 0
+          for: 2m
+          labels: { severity: critical }
+          annotations: { summary: "Outbox publishing is failing" }

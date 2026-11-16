@@ -21,7 +21,14 @@ func CreateTransactionPix(ctx *gin.Context) {
 	}
 
 	handler := transaction_pix_handlers.NewTransactionPixHandler()
-	transaction := handler.Create(body)
+	transaction, err := handler.Create(body)
+	if err != nil {
+		ctx.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{
+			"success": false,
+			"error":   "payment persistence failed",
+		})
+		return
+	}
 
 	ctx.JSON(http.StatusCreated, transaction)
 }

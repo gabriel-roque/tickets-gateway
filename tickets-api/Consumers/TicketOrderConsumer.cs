@@ -13,7 +13,6 @@ public class TicketOrderConsumer : BackgroundService
     private readonly ILogger<TicketOrderConsumer> _logger;
     private readonly IConsumer<Ignore, string> _consumer;
     private readonly List<ConsumeResult<Ignore, string>> _buffer = new();
-    private readonly object _lock = new();
     private readonly SemaphoreSlim _semaphore = new(1, 1);
 
     private const int BULK_SIZE = 10;
@@ -43,36 +42,24 @@ public class TicketOrderConsumer : BackgroundService
         _consumer.Subscribe(KafkaTopicsEnum.TicketOrder);
     }
 
-    protected override Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        _logger.LogInformation($"[TicketOrderConsumer] Starting Consumer...");
-
-        // Rodar em Threads Diferentes
-        Task.Run(() => ConsumeKafka(stoppingToken), stoppingToken);
-        Task.Run(() => ProcessBufferPeriodically(stoppingToken), stoppingToken);
-
-        return Task.CompletedTask;
-    }
-
-    private void ConsumeKafka(CancellationToken stoppingToken)
-    {
+        _logger.LogInformation("[TicketOrderConsumer] Starting Consumer...");
+        var nextFlush = DateTimeOffset.UtcNow.Add(TIME_LIMIT);
         while (!stoppingToken.IsCancellationRequested)
         {
             try
             {
-                var consumeResult = _consumer.Consume(stoppingToken);
-                if (consumeResult != null)
+                if (_buffer.Count >= BULK_SIZE || (_buffer.Count > 0 && DateTimeOffset.UtcNow >= nextFlush))
                 {
-                    lock (_lock)
-                    {
-                        _buffer.Add(consumeResult);
-                    }
-
-                    if (_buffer.Count >= BULK_SIZE)
-                    {
-                        Task.Run(() => ProcessBuffer());
-                    }
+                    await ProcessBuffer();
+                    nextFlush = DateTimeOffset.UtcNow.Add(TIME_LIMIT);
+                    continue;
                 }
+
+                var consumeResult = _consumer.Consume(TimeSpan.FromMilliseconds(100));
+                if (consumeResult != null)
+                    _buffer.Add(consumeResult);
             }
             catch (OperationCanceledException)
             {
@@ -80,7 +67,8 @@ public class TicketOrderConsumer : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError($"[KAFKA_ERROR] {ex.Message}");
+                _logger.LogError(ex, "[KAFKA_ERROR] Ticket order batch will be retried without advancing offsets.");
+                await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
             }
         }
     }
@@ -91,37 +79,31 @@ public class TicketOrderConsumer : BackgroundService
         try
         {
             List<ConsumeResult<Ignore, string>> messagesToProcess;
-            lock (_lock)
-            {
-                // Evita que multiplas Threads manipule o mesmo Buffer
-                if (_buffer.Count == 0) return;
-                messagesToProcess = new List<ConsumeResult<Ignore, string>>(_buffer);
-                _buffer.Clear();
-            }
+            if (_buffer.Count == 0) return;
+            messagesToProcess = new List<ConsumeResult<Ignore, string>>(_buffer);
 
             using var scope = _serviceProvider.CreateScope();
-            ITicketRepository? ticketRepository = scope.ServiceProvider.GetService<ITicketRepository>();
-            IKafkaService? kafkaService = scope.ServiceProvider.GetService<IKafkaService>();
+            var ticketRepository = scope.ServiceProvider.GetRequiredService<ITicketRepository>();
+            var kafkaService = scope.ServiceProvider.GetRequiredService<IKafkaService>();
+            var tickets = messagesToProcess.Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value)
+                    ?? throw new InvalidOperationException("Ticket order payload is empty."))
+                .GroupBy(ticket => ticket.Id)
+                .Select(group => group.Last())
+                .ToList();
+            await ticketRepository.BulkCreate(tickets);
+            _logger.LogInformation("[BULK_INSERT] {Count} tickets persisted idempotently.", tickets.Count);
 
-            if (ticketRepository is not null)
-            {
-                var tickets = messagesToProcess
-                    .Select(m => JsonSerializer.Deserialize<Ticket>(m.Message.Value))
-                    .ToList();
-                await ticketRepository.BulkCreate(tickets);
-                _logger.LogInformation($"[BULK_INSERT] {tickets.Count} tickets inserted!");
+            // A retry can republish after a crash. Payment creation is idempotent by external_id.
+            foreach (var ticket in tickets)
+                await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
 
-                Task.Run(async () =>
-                {
-                    foreach (var ticket in tickets) await kafkaService.SendMessageAsync<Ticket>(KafkaTopicsEnum.PaymentTicket, JsonSerializer.Serialize(ticket));
-                });
-
-                _consumer.Commit(messagesToProcess.Select(m => m.TopicPartitionOffset));
-            }
+            _consumer.Commit(CommitOffsets(messagesToProcess));
+            _buffer.RemoveRange(0, messagesToProcess.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError($"[BULK_INSERT_ERROR] {ex.Message}");
+            _logger.LogError(ex, "[BULK_INSERT_ERROR] Batch retained for retry.");
+            throw;
         }
         finally
         {
@@ -129,12 +111,9 @@ public class TicketOrderConsumer : BackgroundService
         }
     }
 
-    private async Task ProcessBufferPeriodically(CancellationToken stoppingToken)
-    {
-        while (!stoppingToken.IsCancellationRequested)
-        {
-            await Task.Delay(TIME_LIMIT, stoppingToken);
-            await ProcessBuffer();
-        }
-    }
+    private static IEnumerable<TopicPartitionOffset> CommitOffsets(
+        IEnumerable<ConsumeResult<Ignore, string>> messages) => messages
+        .GroupBy(message => message.TopicPartition)
+        .Select(group => new TopicPartitionOffset(group.Key, group.Max(message => message.Offset) + 1));
+
 }

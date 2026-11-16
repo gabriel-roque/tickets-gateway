@@ -1,0 +1,81 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: command-api
+  namespace: eventsphere
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: command-api }
+  minReplicas: 3
+  maxReplicas: 30
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies: [{ type: Percent, value: 100, periodSeconds: 15 }]
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies: [{ type: Percent, value: 25, periodSeconds: 60 }]
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 60 }
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: query-api
+  namespace: eventsphere
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: query-api }
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target: { type: Utilization, averageUtilization: 65 }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: command-api
+  namespace: eventsphere
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: eventsphere, role: command } }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: order-consumer
+  namespace: eventsphere
+spec:
+  minAvailable: 3
+  selector: { matchLabels: { app: eventsphere, role: order-consumer } }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: saga-worker
+  namespace: eventsphere
+spec:
+  minAvailable: 1
+  selector: { matchLabels: { app: eventsphere, role: saga } }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: query-api
+  namespace: eventsphere
+spec:
+  minAvailable: 2
+  selector: { matchLabels: { app: eventsphere, role: query } }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: integration-worker
+  namespace: eventsphere
+spec:
+  minAvailable: 1
+  selector: { matchLabels: { app: eventsphere, role: integration } }

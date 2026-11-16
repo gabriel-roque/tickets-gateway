@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Infrastructure;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using TicketsApi.AppConfig;
@@ -73,7 +74,7 @@ builder.Services.RegisterConsumers();
 var mapperConfig = new MapperConfiguration(mc =>
 {
     mc.AddProfile(new MappingProfile());
-});
+}, Microsoft.Extensions.Logging.Abstractions.NullLoggerFactory.Instance);
 
 IMapper mapper = mapperConfig.CreateMapper();
 builder.Services.AddSingleton(mapper);
@@ -83,6 +84,13 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddAllElasticApm();
 
 var app = builder.Build();
+
+if (builder.Configuration.GetValue<bool>("Legacy:MigrateOnly"))
+{
+    await using var scope = app.Services.CreateAsyncScope();
+    await scope.ServiceProvider.GetRequiredService<AppDbContext>().Database.MigrateAsync();
+    return;
+}
 
 // if (app.Environment.IsDevelopment())
 // {

@@ -19,8 +19,8 @@ public class AppDbContext(DbContextOptions options) : IdentityDbContext<User, Ro
             if (tableName.StartsWith("AspNet"))
                 entityType.SetTableName(tableName.Substring(6));
             
-            Map.Setup(builder);
         }
+        Map.Setup(builder);
     }
 
     public override Task<int> SaveChangesAsync(CancellationToken cancellationToken = new())

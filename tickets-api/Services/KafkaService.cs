@@ -8,26 +8,23 @@ public class KafkaService(
     ILogger<KafkaService> logger
     ) : IKafkaService
 {
-    public Task SendMessageAsync<T>(string topic, string message)
+    public async Task SendMessageAsync<T>(string topic, string message)
     {
         var url = config.GetValue<string>("Kafka:Url") ?? Environment.GetEnvironmentVariable("Kafka__Url");
         logger.LogInformation("KafkaService - Kafka URL: {Url}", url);
         
         var kafkaConfig = new ProducerConfig  { BootstrapServers = url };
 
-        using (var producer = new ProducerBuilder<Null, string>(kafkaConfig).Build())
+        using var producer = new ProducerBuilder<Null, string>(kafkaConfig).Build();
+        try
         {
-            try
-            {
-                var deliveryResult = producer.ProduceAsync(topic, new Message<Null, string>() {Value = message}).Result;
-                logger.LogInformation($"Message send: [{deliveryResult.Topic}: {deliveryResult.Value}]");
-            }
-            catch (ProduceException<Null, string> e)
-            {
-                logger.LogInformation($"Error in send message: [{e.Error.Reason}]");
-            }
+            var deliveryResult = await producer.ProduceAsync(topic, new Message<Null, string> { Value = message });
+            logger.LogInformation("Message persisted: [{Topic}: {Offset}]", deliveryResult.Topic, deliveryResult.Offset);
         }
-        
-        return Task.CompletedTask;
+        catch (ProduceException<Null, string> exception)
+        {
+            logger.LogError(exception, "Kafka failed to persist a message on {Topic}", topic);
+            throw;
+        }
     }
 }

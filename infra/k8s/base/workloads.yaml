@@ -1,0 +1,341 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: command-api
+  namespace: eventsphere
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: eventsphere, role: command }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: command }
+    spec:
+      serviceAccountName: eventsphere
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                topologyKey: kubernetes.io/hostname
+                labelSelector:
+                  matchLabels: { app: eventsphere, role: command }
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: command }
+          startupProbe: &startup
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe: &ready
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe: &live
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources: &apiResources
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: query-api
+  namespace: eventsphere
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: eventsphere, role: query }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: query }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: query }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integration-worker
+  namespace: eventsphere
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: eventsphere, role: integration }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: integration }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: integration }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: order-consumer
+  namespace: eventsphere
+spec:
+  replicas: 6
+  selector:
+    matchLabels: { app: eventsphere, role: order-consumer }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: order-consumer }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: order-consumer }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 500m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: saga-worker
+  namespace: eventsphere
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: eventsphere, role: saga }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: saga }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: saga }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 500m, memory: 512Mi }
+            limits: { cpu: "1", memory: 768Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: lifecycle-worker, namespace: eventsphere }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: eventsphere, role: lifecycle } }
+  template:
+    metadata: { labels: { app: eventsphere, role: lifecycle } }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env: [{ name: EventSphere__Role, value: lifecycle }]
+          startupProbe: { httpGet: { path: /health/live, port: http }, failureThreshold: 30, periodSeconds: 2 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 5, timeoutSeconds: 2 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 10, timeoutSeconds: 2 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 250m, memory: 320Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: expiry-worker, namespace: eventsphere }
+spec:
+  replicas: 1
+  selector: { matchLabels: { app: eventsphere, role: expiry } }
+  template:
+    metadata: { labels: { app: eventsphere, role: expiry } }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env: [{ name: EventSphere__Role, value: expiry }]
+          startupProbe: { httpGet: { path: /health/live, port: http }, failureThreshold: 30, periodSeconds: 2 }
+          readinessProbe: { httpGet: { path: /health/ready, port: http }, periodSeconds: 5, timeoutSeconds: 2 }
+          livenessProbe: { httpGet: { path: /health/live, port: http }, periodSeconds: 10, timeoutSeconds: 2 }
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { cpu: 250m, memory: 320Mi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: projection-worker
+  namespace: eventsphere
+spec:
+  # A single ordered projector owns the global checkpoint. Horizontal scale is
+  # intentionally disabled; availability comes from Deployment restart.
+  replicas: 1
+  selector:
+    matchLabels: { app: eventsphere, role: projection }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: projection }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: projection }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: outbox-worker
+  namespace: eventsphere
+spec:
+  replicas: 2
+  selector:
+    matchLabels: { app: eventsphere, role: outbox }
+  template:
+    metadata:
+      labels: { app: eventsphere, role: outbox }
+    spec:
+      serviceAccountName: eventsphere
+      containers:
+        - name: eventsphere
+          image: eventsphere-api:1.0.0
+          imagePullPolicy: IfNotPresent
+          ports: [{ name: http, containerPort: 8080 }]
+          envFrom:
+            - configMapRef: { name: eventsphere-config }
+            - secretRef: { name: eventsphere-secrets }
+          env:
+            - { name: EventSphere__Role, value: outbox }
+          startupProbe:
+            httpGet: { path: /health/live, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet: { path: /health/ready, port: http }
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet: { path: /health/live, port: http }
+            periodSeconds: 10
+            timeoutSeconds: 2
+          resources:
+            requests: { cpu: 250m, memory: 256Mi }
+            limits: { cpu: "2", memory: 1Gi }

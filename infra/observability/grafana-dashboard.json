@@ -1,0 +1,11 @@
+{
+  "title": "EventSphere Operations",
+  "uid": "eventsphere-ops",
+  "schemaVersion": 39,
+  "panels": [
+    { "type": "timeseries", "title": "Accepted orders/s", "targets": [{ "expr": "sum(rate(eventsphere_orders_accepted_total[1m]))" }], "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 } },
+    { "type": "timeseries", "title": "Command p95", "targets": [{ "expr": "histogram_quantile(0.95, sum by (le) (rate(eventsphere_command_duration_milliseconds_bucket[5m])))" }], "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 } },
+    { "type": "timeseries", "title": "Saga compensations", "targets": [{ "expr": "sum(rate(eventsphere_saga_compensations_total[5m]))" }], "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 } },
+    { "type": "timeseries", "title": "Outbox success/failure", "targets": [{ "expr": "sum(rate(eventsphere_outbox_published_total[5m]))", "legendFormat": "published" }, { "expr": "sum(rate(eventsphere_outbox_failures_total[5m]))", "legendFormat": "failed" }], "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 } }
+  ]
+}

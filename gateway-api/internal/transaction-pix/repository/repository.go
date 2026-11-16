@@ -6,10 +6,11 @@ import (
 )
 
 type Repository struct {
-	db *gorm.DB
+	db        *gorm.DB
+	initError error
 }
 
 func NewTransactionPixRepository() *Repository {
-	db, _ := database.CreateConnection()
-	return &Repository{db}
+	db, err := database.CreateConnection()
+	return &Repository{db: db, initError: err}
 }

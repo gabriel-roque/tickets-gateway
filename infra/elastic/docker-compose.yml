@@ -1,5 +1,3 @@
-version: '3'
-
 services:
   elasticsearch:
     container_name: elasticsearch
@@ -13,10 +11,13 @@ services:
     environment:
       - xpack.monitoring.templates.enabled=true
       - xpack.watcher.enabled=false
-      - 'ES_JAVA_OPTS=-Xms512m -Xmx512m'
+      - 'ES_JAVA_OPTS=-Xms384m -Xmx384m'
       - discovery.type=single-node
       - ELASTICSEARCH_USERNAME="elastic"
-      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD}
+      - ELASTICSEARCH_PASSWORD=${ELASTICSEARCH_PASSWORD:?Set ELASTICSEARCH_PASSWORD}
+    mem_limit: 768m
+    memswap_limit: 768m
+    cpus: 0.50
     networks:
       - elastic
 
@@ -31,13 +32,16 @@ services:
     depends_on:
       - elasticsearch
     environment:
-      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=59f4f8062f4fc86ba75f50dd234272e4
-      - XPACK_REPORTING_ENCRYPTIONKEY=72c915390ada0c1fd1d4b4e311784267
-      - XPACK_SECURITY_ENCRYPTIONKEY=10d598911b1af8b1bfd7ce0c22a90e1d
+      - XPACK_ENCRYPTEDSAVEDOBJECTS_ENCRYPTIONKEY=${KIBANA_SAVED_OBJECTS_KEY:?Set KIBANA_SAVED_OBJECTS_KEY}
+      - XPACK_REPORTING_ENCRYPTIONKEY=${KIBANA_REPORTING_KEY:?Set KIBANA_REPORTING_KEY}
+      - XPACK_SECURITY_ENCRYPTIONKEY=${KIBANA_SECURITY_KEY:?Set KIBANA_SECURITY_KEY}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - ELASTICSEARCH_HOSTS=["http://elasticsearch:9200"]
       - ELASTICSEARCH_USERNAME="kibana_system"
-      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD}
+      - ELASTICSEARCH_PASSWORD=${KIBANA_PASSWORD:?Set KIBANA_PASSWORD}
+    mem_limit: 512m
+    memswap_limit: 512m
+    cpus: 0.35
     networks:
       - elastic
 
@@ -48,12 +52,15 @@ services:
     volumes:
       - ./config/apm-server.yml:/usr/share/apm-server/apm-server.yml
     environment:
-      ELASTIC_PASSWORD: ${ELASTICSEARCH_PASSWORD}
+      ELASTIC_PASSWORD: ${ELASTICSEARCH_PASSWORD:?Set ELASTICSEARCH_PASSWORD}
     ports:
       - 8200:8200
     depends_on:
       - elasticsearch
       - kibana
+    mem_limit: 256m
+    memswap_limit: 256m
+    cpus: 0.25
     networks:
       - elastic
 

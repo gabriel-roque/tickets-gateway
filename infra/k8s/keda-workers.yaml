@@ -1,0 +1,48 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: order-consumer
+  namespace: eventsphere
+spec:
+  scaleTargetRef: { name: order-consumer }
+  minReplicaCount: 6
+  maxReplicaCount: 30
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka.eventsphere.svc.cluster.local:9092
+        consumerGroup: eventsphere-order-commands-v1
+        topic: eventsphere.commands.orders
+        lagThreshold: "200"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: saga-worker
+  namespace: eventsphere
+spec:
+  scaleTargetRef: { name: saga-worker }
+  minReplicaCount: 2
+  maxReplicaCount: 30
+  triggers:
+    - type: mssql
+      metadata:
+        connectionFromEnv: ConnectionStrings__WriteDb
+        query: SELECT COUNT(*) FROM Sagas WHERE Status IN (0, 2) AND NextAttemptAt <= SYSUTCDATETIME()
+        targetValue: "100"
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: outbox-worker
+  namespace: eventsphere
+spec:
+  scaleTargetRef: { name: outbox-worker }
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  triggers:
+    - type: mssql
+      metadata:
+        connectionFromEnv: ConnectionStrings__WriteDb
+        query: SELECT COUNT(*) FROM Outbox WHERE PublishedAt IS NULL AND DeadLetteredAt IS NULL AND NextAttemptAt <= SYSUTCDATETIME()
+        targetValue: "200"

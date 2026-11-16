@@ -1,1 +1,4 @@
-kind delete cluster --name tickets-gateway-cluster
+#!/usr/bin/env bash
+set -euo pipefail
+
+kind delete cluster --name eventsphere

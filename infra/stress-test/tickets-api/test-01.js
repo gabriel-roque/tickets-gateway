@@ -22,17 +22,16 @@ export let options = {
 };
 
 export default function () {
-  let url = 'http://localhost:5000/tickets';
+  let url = `${__ENV.BASE_URL || 'http://localhost:5000'}/tickets`;
   let payload = JSON.stringify({
-    event_id: 'e24bc3ee-c06e-49fb-f543-08dd5db6c96a',
+    event_id: __ENV.EVENT_ID,
     payment_method: 1,
   });
 
   let params = {
     headers: {
       'Content-Type': 'application/json',
-      Authorization:
-        'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1laWRlbnRpZmllciI6ImY2MjgzOTliLTVmNWUtNDRhMC04YzBjLTA4ZGQ1ZGI2YmU0NSIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL25hbWUiOiJBZG1pbiIsImh0dHA6Ly9zY2hlbWFzLnhtbHNvYXAub3JnL3dzLzIwMDUvMDUvaWRlbnRpdHkvY2xhaW1zL2VtYWlsYWRkcmVzcyI6ImFkbWluQGVtYWlsLmNvbSIsImh0dHA6Ly9zY2hlbWFzLm1pY3Jvc29mdC5jb20vd3MvMjAwOC8wNi9pZGVudGl0eS9jbGFpbXMvcm9sZSI6IkFkbWluIiwiZXhwIjoxNzQ0NDc3MTA5LCJpc3MiOiJodHRwczovL3RpY2tldHMtYXBpIiwiYXVkIjoiaHR0cHM6Ly90aWNrZXRzLWFwaSJ9.3d6QwPSgcpcH7ZNe5PKcGZyi9uS52YARZm3NT6QgGoc',
+      Authorization: `Bearer ${__ENV.JWT_TOKEN}`,
     },
   };
 

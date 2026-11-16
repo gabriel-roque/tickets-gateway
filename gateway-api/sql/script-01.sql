@@ -6,7 +6,8 @@ create table transaction_pix
         constraint transaction_pix_pk
             primary key,
     name        varchar(100)                       not null,
-    external_id varchar(100)                       not null,
+    external_id varchar(100)                       not null
+        constraint transaction_pix_external_id_uk unique,
     value       integer                            not null,
     qr_code     varchar(255)                       not null,
     status      boolean default false              not null

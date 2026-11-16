@@ -1,18 +1,17 @@
 package transaction_pix_repository
 
 import (
-	"fmt"
-	"log"
-
 	transaction_pix "github.com/gabriel-roque/gateway-api/internal/transaction-pix"
 	transaction_interfaces "github.com/gabriel-roque/gateway-api/pkg/interfaces"
 	"github.com/gabriel-roque/gateway-api/pkg/qrcode"
 	"github.com/google/uuid"
+	"gorm.io/gorm/clause"
 )
 
-func (r *Repository) Save(transactionDTO *transaction_interfaces.CreateTransactionPix) transaction_pix.TransactionPix {
-	sql, _ := r.db.DB()
-
+func (r *Repository) Save(transactionDTO *transaction_interfaces.CreateTransactionPix) (transaction_pix.TransactionPix, error) {
+	if r.initError != nil {
+		return transaction_pix.TransactionPix{}, r.initError
+	}
 	qr_code := qrcode.GenerateQRCodePix(transactionDTO.Value, transactionDTO.Name)
 
 	transaction := transaction_pix.TransactionPix{
@@ -24,23 +23,16 @@ func (r *Repository) Save(transactionDTO *transaction_interfaces.CreateTransacti
 		Status:     false,
 	}
 
-	create := r.db.Create(&transaction)
-
-	transactionId := transaction.Id
-
-	if create.Error != nil {
-		log.Printf("Erro ao criar transação: %v", create.Error)
-	} else {
-		log.Println("Transação criada com sucesso!")
+	if err := r.db.Clauses(clause.OnConflict{
+		Columns:   []clause.Column{{Name: "external_id"}},
+		DoNothing: true,
+	}).Create(&transaction).Error; err != nil {
+		return transaction_pix.TransactionPix{}, err
 	}
 
-	transactionCreated, errGet := r.GetById(transactionId)
-
-	if errGet != nil {
-		fmt.Println("FAILED_GET_TRANSACTION", errGet)
+	var persisted transaction_pix.TransactionPix
+	if err := r.db.Where("external_id = ?", transactionDTO.ExternalId).First(&persisted).Error; err != nil {
+		return transaction_pix.TransactionPix{}, err
 	}
-
-	sql.Close()
-
-	return transactionCreated
+	return persisted, nil
 }
