@@ -1,3 +1,5 @@
+![Event Ticketing Microservices Architecture](./infra/img/tickets-gateway.png)
+
 # EventSphere
 
 EventSphere evolui o projeto original de venda de ingressos para uma plataforma distribuída de operação de eventos. A implementação nova convive com os serviços legados durante a migração e cobre reserva de estoque, pagamento, antifraude, emissão, settlement, notificação, reembolso, cancelamento de evento, transferência e check-in.
